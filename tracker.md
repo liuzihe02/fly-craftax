@@ -64,7 +64,14 @@ All are panels
 
 ### Milestones
 
-- [ ] M1 loader + JAX kernel + Brian2 validation
+- [ ] M1 loader + JAX kernel + Brian2 validation, plan: `docs/plans/2026-09-09-m1-brain.md`
+  - [ ] scaffold, pinned env, data download
+  - [ ] connectome loader with cache
+  - [ ] Brian2 oracle
+  - [ ] JAX LIF kernel, spike-for-spike match on toy graphs
+  - [ ] oracle match on a 2000-neuron MaleCNS subgraph
+  - [ ] full-brain throughput benchmark on the 4060
+  - [ ] MN9 smoke check with labellar GRN drive
 - [ ] M2 Craftax wrappers + retina + state encoders
 - [ ] M3 zero-shot loop with ablation controls
 - [ ] M4 PPO linear readout
