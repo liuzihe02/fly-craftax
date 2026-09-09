@@ -68,7 +68,7 @@ All are panels
   - [x] scaffold, pinned env, data download
   - [x] connectome loader with cache
   - [x] Brian2 oracle
-  - [ ] JAX LIF kernel, spike-for-spike match on toy graphs
+  - [x] JAX LIF kernel, spike-for-spike match on toy graphs
   - [ ] oracle match on a 2000-neuron MaleCNS subgraph
   - [ ] full-brain throughput benchmark on the 4060
   - [ ] MN9 smoke check with labellar GRN drive
