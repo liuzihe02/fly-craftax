@@ -72,7 +72,14 @@ All are panels
   - [ ] oracle match on a 2000-neuron MaleCNS subgraph
   - [ ] full-brain throughput benchmark on the 4060
   - [ ] MN9 smoke check with labellar GRN drive
-- [ ] M2 Craftax wrappers + retina + state encoders
+- [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
+  - [ ] craftax installed and pinned, baseline wrappers copied, one env step
+  - [ ] egocentric action wrapper
+  - [ ] survival reward wrapper and batched env stack
+  - [ ] photoreceptor retinotopy from lamina and medulla synapses
+  - [ ] radial retina sampler rotated by facing, visual check
+  - [ ] drive assembly: retina plus hunger, thirst, fatigue
+  - [ ] integration rollout through env, drive, brain, visual check
 - [ ] M3 zero-shot loop with ablation controls
 - [ ] M4 PPO linear readout
 - [ ] M5 viewer
