@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from flycraftax.brain import (
-    BrainParams, build_weights, init_state, rate_hz, rfc_steps, run_window, step,
+    BrainParams, build_weights, init_state, rate_for_hz, rate_hz, rfc_steps, run_window, step,
 )
 from flycraftax.oracle import run_brian2
 
@@ -93,3 +93,25 @@ def test_run_window_counts_and_poisson_rate():
     r = np.asarray(rate_hz(state.counts, n_steps, p))
     assert r.shape == (4, n)
     assert 85 < r.mean() < 115
+
+
+@pytest.mark.slow
+def test_matches_oracle_on_malecns_subgraph():
+    """~2000 real neurons downstream of the labellar GRNs, driven at 100 Hz for 200 ms."""
+    from flycraftax.data import load_connectome, subgraph
+    conn = load_connectome()
+    seeds = conn.index(type_prefix="LB")
+    nodes, pre, post, sc = subgraph(conn, seeds, hops=2, max_n=2000)
+    p = BrainParams()
+    T = 2000
+    rng = np.random.default_rng(0)
+    kicks = np.zeros((T, len(nodes)), dtype=bool)
+    kicks[:, : len(seeds)] = rng.random((T, len(seeds))) < rate_for_hz(100.0, p)
+    ref = run_brian2(len(nodes), pre, post, sc * p.w_syn, kicks, T * p.dt_ms, p)
+    got = run_jax_with_kicks(len(nodes), pre, post, sc, kicks, p)
+    assert ref.sum() > 1000
+    # 2 of 4M raster cells differ: neuron 110 fires at t=1131 instead of 1130, after
+    # 3542 identical spikes. At t=1130 the kernel's v sits 4.8e-6 mV (1.3 float32 ULPs)
+    # under v_th while Brian2's float64 lands just over it. Spike totals match exactly
+    # (6283 each) and no other neuron differs, so this is accumulation precision.
+    assert np.mean(got == ref) > 0.999

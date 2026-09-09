@@ -107,3 +107,34 @@ def load_connectome(threshold: int = 5, data_dir: Path = Path("data")) -> Connec
     )
     np.savez(cache, **conn.__dict__)
     return conn
+
+
+def subgraph(conn: Connectome, seed_idx, hops: int = 2, max_n: int = 2000):
+    """Seeds plus `hops` downstream hops, ranked by incoming signed magnitude, capped at `max_n`.
+
+    Returns (node_idx, pre, post, signed_count) with pre/post re-indexed into
+    0..len(node_idx)-1; edges are every connectome edge among the selected nodes.
+    """
+    sc = conn.signed_count()
+    mag = np.abs(sc)
+    selected = [int(i) for i in np.asarray(seed_idx)]
+    chosen = set(selected)
+    frontier = np.asarray(selected, np.int32)
+    for _ in range(hops):
+        if len(selected) >= max_n:
+            break
+        m = np.isin(conn.pre, frontier)
+        score = np.bincount(conn.post[m], weights=mag[m], minlength=conn.n)
+        nz = np.flatnonzero(score > 0)                      # keep the argsort off all 146k
+        # stable: the max_n cut falls on a score tie, so the node set must not depend
+        # on the sort implementation.
+        cand = [i for i in nz[np.argsort(-score[nz], kind="stable")] if i not in chosen]
+        cand = cand[: max_n - len(selected)]
+        selected += cand
+        chosen.update(cand)
+        frontier = np.asarray(cand, np.int32)
+    nodes = np.asarray(selected, np.int32)
+    remap = np.full(conn.n, -1, np.int32)
+    remap[nodes] = np.arange(len(nodes), dtype=np.int32)
+    keep = (remap[conn.pre] >= 0) & (remap[conn.post] >= 0)
+    return nodes, remap[conn.pre[keep]], remap[conn.post[keep]], sc[keep]
