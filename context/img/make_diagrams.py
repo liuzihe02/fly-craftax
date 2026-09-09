@@ -1,4 +1,4 @@
-"""Generate explanatory diagrams for context/bio_background_draft.md.
+"""Generate explanatory diagrams for context/bio_background.md.
 
 Run: conda run -n flycraftax python context/img/make_diagrams.py
 """

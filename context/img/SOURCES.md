@@ -62,7 +62,7 @@ All images below were verified with `file` to be real images (not HTML error pag
 - None of the 8 targets were skipped — a suitable CC-BY / CC-BY-SA / public-domain image was found for every target. Note that target 2 (ommatidium cross-section + retina/lamina/medulla projection) and target 3 (pale/yellow opsin scheme) ended up documented by two different eLife figures (files 02 and 03) rather than reusing one image for both, since each had a cleaner dedicated schematic.
 
 ## Cropping note
-Files 01 to 06 were cropped on 2026-09-09 to the panels referenced in bio_background_draft.md (Namiki A+B; Kind B+C; Hulse A+C; Rayshubskiy A+D+E; Shiu a+b+c). Full figures are at the source URLs above.
+Files 01 to 06 were cropped on 2026-09-09 to the panels referenced in bio_background.md (Namiki A+B; Kind B+C; Hulse A+C; Rayshubskiy A+D+E; Shiu a+b+c). Full figures are at the source URLs above.
 
 ## 01_synapse_wikipedia.jpg
 - Shows: neuron anatomy (dendrites, axon, direction of impulse) with an inset of a chemical synapse.

@@ -4,6 +4,8 @@ Hobby RL project. A real fruit-fly connectome drives an agent in Craftax-Classic
 
 ## Bio Background
 
+- See [context/bio_background.md](context/bio_background.md), a distilled non-biologist explanation of the brain, the LIF model, and every circuit in the I/O mapping
+
 ## Spec
 
 High level project implementation specs

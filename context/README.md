@@ -9,7 +9,7 @@ Each file ends with an "Open questions for spec" section. Those questions are th
 - `craftax.md` - Craftax-Classic-Pixels internals: obs layout, state struct, action and achievement enums, movement and facing semantics, survival clocks, wrapper patterns, PPO baseline structure
 - `doomfly.md` - prior MaleCNS + ViZDoom attempt: importer, retina mapping, DN readout, and the documented reasons it failed to learn
 - `vision.md` - flygym compound-eye sampler, why it cannot be reused verbatim, two options for sampling a top-down frame, photoreceptor-to-column mapping in MaleCNS
-- `bio_background_draft.md` - draft neuroscience background per circuit, pending owner review before any of it enters the spec
+- `bio_background.md` - distilled neuroscience background for a non-biologist: the fly brain, how the wiring becomes a LIF model, and every circuit in the I/O mapping, with figures in `img/`
 - `prior_art.md` - FlyGM, Digital Sphinx, embodied FlyWire, and other connectome-as-controller work
 
 Local resources the notes refer to (both gitignored):

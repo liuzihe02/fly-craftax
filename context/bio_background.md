@@ -1,4 +1,4 @@
-# Bio background (DRAFT, distilled for a non-biologist)
+# Bio background (distilled for a non-biologist)
 
 - Plain-language version. Fully cited version is in git history (commit c1c684b)
 - Image sources in `img/SOURCES.md`
