@@ -64,11 +64,11 @@ All are panels
 
 ### Milestones
 
-- M1 loader + JAX kernel + Brian2 validation
-- M2 Craftax wrappers + retina + state encoders
-- M3 zero-shot loop with ablation controls
-- M4 PPO linear readout
-- M5 viewer
+- [ ] M1 loader + JAX kernel + Brian2 validation
+- [ ] M2 Craftax wrappers + retina + state encoders
+- [ ] M3 zero-shot loop with ablation controls
+- [ ] M4 PPO linear readout
+- [ ] M5 viewer
 
 ## Known Limitations
 
