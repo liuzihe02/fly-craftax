@@ -65,7 +65,7 @@ All are panels
 ### Milestones
 
 - [ ] M1 loader + JAX kernel + Brian2 validation, plan: `docs/plans/2026-09-09-m1-brain.md`
-  - [ ] scaffold, pinned env, data download
+  - [x] scaffold, pinned env, data download
   - [ ] connectome loader with cache
   - [ ] Brian2 oracle
   - [ ] JAX LIF kernel, spike-for-spike match on toy graphs
