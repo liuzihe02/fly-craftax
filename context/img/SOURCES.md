@@ -18,14 +18,6 @@ All images below were verified with `file` to be real images (not HTML error pag
 - Licence: CC BY 4.0 (confirmed via Crossref licence metadata for DOI 10.7554/eLife.71858)
 - Attribution: Kind E, Longden KD, Nern A, et al. (2021) Synaptic targets of photoreceptors specialized to detect color and skylight polarization in Drosophila. eLife 10:e71858. https://doi.org/10.7554/eLife.71858
 
-## 03_pale_yellow_ommatidia_wells2017.png
-- Shows: clean schematic of R1/R6/R7/R8 arrangement in an ommatidium (panel A) and the pale vs yellow opsin (Rh3/Rh4/Rh5/Rh6) regulatory scheme (panel B).
-- Paper: "Parallel Activin and BMP signaling coordinates R7/R8 photoreceptor subtype pairing in the stochastic Drosophila retina", Figure 1.
-- Authors/year: Brent S Wells, Daniela Pistillo, Erin Barnhart, Claude Desplan (2017), eLife.
-- Source URL: https://elifesciences.org/articles/25301 (figure: https://iiif.elifesciences.org/lax/25301%2Felife-25301-fig1-v2.tif/full/full/0/default.jpg)
-- Licence: CC BY 4.0 (confirmed via Crossref licence metadata for DOI 10.7554/eLife.25301)
-- Attribution: Wells BS, Pistillo D, Barnhart E, Desplan C (2017) Parallel Activin and BMP signaling coordinates R7/R8 photoreceptor subtype pairing in the stochastic Drosophila retina. eLife 6:e25301. https://doi.org/10.7554/eLife.25301
-
 ## 04_central_complex_hulse2021.png
 - Shows: central complex anatomy - ellipsoid body (EB), fan-shaped body (FB/BU label in figure), protocerebral bridge (PB), noduli (NO), asymmetric body (AB), from multiple 3D views, with a glossary table of central-complex neuropil abbreviations.
 - Paper: "A connectome of the Drosophila central complex reveals network motifs suitable for flexible navigation and context-dependent action selection", Figure 1.
@@ -70,7 +62,7 @@ All images below were verified with `file` to be real images (not HTML error pag
 - None of the 8 targets were skipped — a suitable CC-BY / CC-BY-SA / public-domain image was found for every target. Note that target 2 (ommatidium cross-section + retina/lamina/medulla projection) and target 3 (pale/yellow opsin scheme) ended up documented by two different eLife figures (files 02 and 03) rather than reusing one image for both, since each had a cleaner dedicated schematic.
 
 ## Cropping note
-Files 01 to 06 were cropped on 2026-09-09 to the panels referenced in bio_background_draft.md (Namiki A+B; Kind B+C; Wells A+B; Hulse A+C; Rayshubskiy A+D+E; Shiu a+b+c). Full figures are at the source URLs above.
+Files 01 to 06 were cropped on 2026-09-09 to the panels referenced in bio_background_draft.md (Namiki A+B; Kind B+C; Hulse A+C; Rayshubskiy A+D+E; Shiu a+b+c). Full figures are at the source URLs above.
 
 ## 01_synapse_wikipedia.jpg
 - Shows: neuron anatomy (dendrites, axon, direction of impulse) with an inset of a chemical synapse.

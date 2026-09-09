@@ -1,71 +1,49 @@
 # Bio background (DRAFT, distilled for a non-biologist)
 
-- Plain-language version
-- Fully cited version is in git history (commit c1c684b)
-- Anything marked (unverified) came from a search summary and was not checked against the paper
+- Plain-language version. Fully cited version is in git history (commit c1c684b)
+- Image sources in `img/SOURCES.md`
 
 ## The fly brain in one minute
 
 - Size
   - About 140k neurons in the brain
-  - Another ~20k in the ventral nerve cord (VNC)
-    - The VNC is the fly's spinal cord
-    - It runs the legs and wings
-    - We drop it, since a gridworld has no legs
+  - Another ~20k in the ventral nerve cord (VNC), the fly's spinal cord
+    - Runs the legs and wings. We drop it, since a gridworld has no legs
 - Two brain regions matter for us
-  - Optic lobes
-    - Two big visual processing blocks, one per eye
-    - About 60% of all brain neurons live here
-  - Central brain
-    - Everything else: smell, taste, memory, navigation, internal state
-    - Also holds the command neurons that tell the body what to do
+  - Optic lobes: two big visual processing blocks, one per eye, about 60% of all brain neurons
+  - Central brain: everything else, plus the command neurons that tell the body what to do
 - A connectome is a wiring diagram
   - For every neuron: which other neurons it connects to, and with how many synapses
   - A synapse is a contact point where one neuron pushes on another
     - More synapses between a pair means a stronger connection
-  - Each neuron releases one main chemical, its neurotransmitter
-    - The chemical decides whether the neuron excites (pushes up) or inhibits (pushes down) its targets
+  - Each neuron releases one main chemical, its neurotransmitter, which sets whether it excites or inhibits its targets
     - Excitatory: acetylcholine
     - Inhibitory: GABA, glutamate, histamine
-    - Neuromodulators: dopamine, serotonin, octopamine
-      - Change how circuits behave over seconds to minutes
-      - Our model cannot represent this
-      - Under 1% of neurons, so a small loss
+    - Neuromodulators (dopamine, serotonin, octopamine): act over seconds to minutes, our model cannot represent this, under 1% of neurons
 
-<img src="img/01_synapse_wikipedia.jpg" width="320" alt="Neuron anatomy: dendrites collect input, the axon carries the spike, and the inset shows the synapse where neurotransmitter crosses to the next cell">
+<img src="img/01_synapse_wikipedia.jpg" width="320" alt="Neuron anatomy: dendrites collect input, the axon carries the spike, inset shows the synapse">
 
-<img src="img/01_synapse_qbi.jpg" width="480" alt="Synapse close-up: a spike arriving at the axon terminal releases neurotransmitter into the cleft, which binds receptors on the target's dendrite">
+<img src="img/01_synapse_qbi.jpg" width="480" alt="Synapse close-up: a spike releases neurotransmitter into the cleft, which binds receptors on the target">
 
 - How the pictures map to our model
-  - The spike travelling down the axon is our binary $s_j = 1$
-  - The 1.8 ms axon delay is the travel time down that axon
-  - Neurotransmitter release plus receptor binding is collapsed into one number: add $w_{ji}$ to the target's $g_i$
-  - The sign of $w_{ji}$ is decided by which neurotransmitter the sending neuron uses
-  - The number of synapses between the pair (there can be dozens) is the magnitude
-  - Sources: Wikimedia Commons "Chemical synapse schema"; Queensland Brain Institute, brain-basics pages
+  - The spike travelling down the axon is our binary $s_j = 1$, and the axon gives the 1.8 ms delay
+  - Neurotransmitter release plus receptor binding collapses to one number: add $w_{ji}$ to the target's $g_i$
+  - Sign of $w_{ji}$ comes from the sender's neurotransmitter, magnitude from the synapse count
 - Descending neurons (DNs)
   - The ~1,300 neurons whose axons leave the brain and go down into the VNC
   - The brain's only way of commanding movement
-  - Everything the fly does physically is expressed as a pattern of DN activity
 
 <img src="img/01_fly_cns_namiki2018.png" width="420" alt="Fly central nervous system: brain with optic lobes on top, VNC below, one descending neuron drawn from brain to VNC">
 
-- Reading the figure (Namiki et al. 2018, eLife, Fig 1, panels A and B)
-  - Panel A: where the CNS (yellow) sits in the body, brain in the head, VNC in the thorax
-  - Panel B: the two fan-shaped optic lobes flanking the central brain, a narrow neck, and the VNC below (labelled VNS in the figure)
-    - The green line is one descending neuron: cell body and branches in the brain, one long axon running down the VNC
-    - The "Imaging" and "Photo-activation" labels are the paper's experiment, ignore
+- Namiki et al. 2018. Panel A: CNS (yellow) in the body. Panel B: optic lobes flanking the central brain, VNC below (labelled VNS), and one descending neuron in green running from brain to VNC
   - We keep everything above the neck and cut everything below
 - Cell types
-  - A named group of neurons with the same shape and wiring
-  - Usually a mirrored left/right pair or a small population
-  - Names like DNp09 or MDN are cell types
-  - The connectome data labels every neuron with its type, which is how we find them
+  - A named group of neurons with the same shape and wiring, usually a mirrored left/right pair or a small population
+  - Names like DNp09 or MDN are cell types. The connectome data labels every neuron with its type, which is how we find them
 
 ## How the wiring diagram becomes a running brain
 
-- This is the Shiu et al. 2024 recipe we are copying
-- Full details in `brain_model.md`
+- This is the Shiu et al. 2024 recipe we are copying. Full details in `brain_model.md`
 
 ```mermaid
 flowchart LR
@@ -94,12 +72,10 @@ flowchart LR
 
 - Each neuron is a single number: its voltage $v$
   - Leaks toward a rest value of -52 mV
-  - When it crosses -45 mV it "spikes"
-  - After a spike: resets to -52 mV, frozen for 2.2 ms
+  - When it crosses -45 mV it "spikes", resets to -52 mV, and is frozen for 2.2 ms
 - Each neuron also has an input accumulator $g$
   - Decays with a 5 ms time constant
-  - A spike from neuron $j$ adds $w_{ji}$ to the $g$ of every target $i$
-  - The addition lands 1.8 ms after the spike (axon delay)
+  - A spike from neuron $j$ adds $w_{ji}$ to the $g$ of every target $i$, 1.8 ms later
 
 $$
 \begin{aligned}
@@ -112,23 +88,18 @@ $$
 <img src="img/00_lif_trace.png" width="640" alt="LIF trace with the exact Shiu parameters: input spikes at 100 Hz through a 25-synapse edge, the decaying input accumulator g, and the target voltage crossing threshold once">
 
 - Reading the trace
-  - Each input spike adds 6.9 mV to $g$, which then decays over ~5 ms
-  - $v$ integrates $g$ slowly (20 ms) so a single spike is not enough
-  - A burst of closely spaced input spikes (around 150 to 170 ms) pushes $v$ over -45 mV, it fires once, resets, and sits frozen for 2.2 ms
-  - Even a strong edge driven at 100 Hz fires the target only once in 300 ms
-    - This is why the whole brain is quiet unless driven hard
-  - Generated by `img/make_diagrams.py`, so the parameters can be changed and re-run
+  - Each input spike adds 6.9 mV to $g$, which decays over ~5 ms. $v$ integrates it slowly (20 ms), so one spike is not enough
+  - A burst of close spikes (150 to 170 ms) pushes $v$ over threshold. It fires once, resets, and is frozen 2.2 ms
+  - A strong edge at 100 Hz fires the target once in 300 ms. This is why the brain is quiet unless driven hard
+  - Generated by `img/make_diagrams.py`
 
 ### Weights
 
 - The weight is just the connectome
   - $w_{ji} = s_j \cdot n_{ji} \cdot 0.275\ \text{mV}$
-  - $n_{ji}$ is the synapse count from $j$ to $i$
-  - $s_j = \pm 1$ is the sign of the sending neuron's neurotransmitter
+  - $n_{ji}$ is the synapse count from $j$ to $i$, $s_j = \pm 1$ is the sender's sign
   - 0.275 mV is the one free constant in the whole model
-- Scale intuition
-  - Gap from rest to threshold is 7 mV
-  - So about 25 simultaneous synapses fire a resting neuron
+- Scale intuition: gap from rest to threshold is 7 mV, so about 25 simultaneous synapses fire a resting neuron
 
 ### The whole brain
 
@@ -206,255 +177,119 @@ flowchart LR
 
 ### Input and output
 
-- Input means: pick a set of neurons and make them fire randomly at a chosen rate
-  - Poisson spikes at, say, 100 Hz
+- Input: pick a set of neurons and make them fire randomly at a chosen rate (Poisson spikes at, say, 100 Hz)
   - The paper's whole input vocabulary is "this cell type at this many Hz"
-- Output means: count spikes of a chosen set over a time window, convert to Hz
-- Every I/O channel below is implemented the same way
-  - Input channel: a fixed list of neuron indices, plus a rate we set from the game state
-  - Output channel: a fixed list of neuron indices whose spike count we read
+- Output: count spikes of a chosen set over a time window, convert to Hz
+- Every I/O channel below is a fixed list of neuron indices plus either a rate we set (input) or a count we read (output)
 
 ## Vision: pixels in
 
 <img src="img/08_compound_eye_sem_howard.jpg" width="420" alt="Scanning electron micrograph of a fruit fly compound eye showing the hexagonal grid of lenses">
 
-- Each dome is one ommatidium, one pixel of the fly's image (Louisa Howard, Dartmouth, public domain)
-
-<img src="img/03_pale_yellow_ommatidia_wells2017.png" width="420" alt="Ommatidium schematic and the pale versus yellow opsin scheme">
-
-- Reading the figure (Wells et al. 2017, eLife, Fig 1, panels A and B)
-  - Panel A: the 8 photoreceptors inside one ommatidium. R1 to R6 are the tall cells around the outside (only R1 and R6 labelled), R7 sits above R8 in the centre
-  - Panel B: two ommatidium flavours, yellow (65%) and pale (35%), defined by which opsins R7 and R8 end up expressing (Rh4 + Rh6 for yellow, Rh3 + Rh5 for pale)
-    - The other labels (Ss, Melt, Wts) are the genes that decide the flavour, ignore
-    - Our dataset labels R7 and R8 by this flavour: R7y, R7p, R8y, R8p
+- Each dome is one ommatidium, one pixel of the fly's image
 
 <img src="img/02_retina_lamina_medulla_kind2021.png" width="600" alt="Retina to lamina to medulla projection and the hexagonal column map of one eye">
 
-- Reading the figure (Kind et al. 2021, eLife, Fig 1, panels B and C)
-  - Panel B, left: the three ommatidium types (pale, yellow, dorsal rim) drawn as columns, with which opsin each cell carries
-  - Panel B, right: where the axons go. R1-R6 (green) stop in the lamina. R7 and R8 pass through and end in the medulla at different depths (M3 or M6)
-  - Panel C: the medulla seen face-on, one dot per column. Our dataset has about 800 to 900 such columns per eye. This is the hex grid our retina sampler has to map pixels onto
-    - Light blue dots are pale columns, yellow are yellow, red is the dorsal rim (polarisation vision, not useful to us)
-    - The aMe12 and "seed column" legend entries are the paper's experiment, ignore
-
+- Kind et al. 2021. Panel B: inside one ommatidium, R1-R6 (green) stop in the lamina, R7 and R8 pass through to the medulla. Panel C: the medulla face-on, one dot per column, about 800 to 900 per eye
+  - This hex grid is what our retina sampler has to map pixels onto
+  - Light blue dots are pale columns, yellow are yellow. Ignore the red dorsal rim and the aMe12 legend entries
 - Eye structure
-  - Each eye is a hexagonal grid of about 800 little lenses (ommatidia)
-  - Behind each lens sit 8 photoreceptor cells
-    - R1-R6: six cells that respond to overall brightness
-      - Feed the motion-detection pathway
-      - Think of them as a greyscale camera
-    - R7 and R8: two cells sensitive to specific colours
-      - R7 sees UV
-      - R8 sees blue or green
-      - Colour vision comes from comparing R7 against R8, not from R8 alone
-- Sign
-  - All photoreceptors are inhibitory (histamine)
-  - Light makes them fire, and their firing suppresses the next layer
-  - The sign flips again downstream
-  - Normal, and handled automatically by the connectome signs
+  - Each eye is a hexagonal grid of about 800 lenses (ommatidia), 8 photoreceptors behind each
+    - R1-R6: respond to overall brightness, feed motion detection. A greyscale camera
+    - R7 and R8: colour. R7 sees UV, R8 sees blue or green depending on the ommatidium's pale or yellow flavour
+    - Colour vision comes from comparing R7 against R8, so using R8 alone is a simplification
+  - All photoreceptors are inhibitory (histamine). Light makes them fire, which suppresses the next layer. The connectome signs handle this
 - What the data has
-  - R1-R6 is one pooled label (3,377 cells)
-  - R7 and R8 are split into pale / yellow / dorsal-rim subtypes
-  - Photoreceptors carry no eye-position coordinates
-    - We must infer which lens each one belongs to from what it connects to
+  - R1-R6 is one pooled label (3,377 cells). R7 and R8 are split by flavour: R7p, R7y, R8p, R8y
+  - Photoreceptors carry no eye-position coordinates, so which lens each belongs to must be inferred from what it connects to
 - Mapping for us
-  - Pixel brightness drives R1-R6
-  - Pixel colour drives R8
-  - Using R8 alone for colour is a simplification
-- Implementation sketch
   - Sample the game frame at ~800 points per eye, one per lens
-  - Brightness at a point sets the Poisson rate of that lens's R1-R6 cells
-    - Roughly rate = brightness times some max Hz
-  - Colour sets the R8 rate the same way
+  - Brightness at a point sets the Poisson rate of that lens's R1-R6 cells, colour sets the R8 rate
   - Which pixels map to which lens is the retina geometry decision, still open
 
 ## Internal state: hunger, thirst, fatigue in
 
-- These are the "how am I feeling" signals
-  - In a real fly they come from body sensors we do not have
-  - So we inject them directly into brain neurons that normally carry the signal
-- Implementation sketch
-  - Craftax exposes food, drink, energy as integers 0 to 9
-    - Plus smooth float accumulators if we want a continuous signal
-  - Map deficit to a rate
-    - e.g. hunger rate = (9 - food) / 9 times max Hz
-  - Drive the chosen cell type at that rate
-  - Three scalars in, three small neuron sets driven
+- These are the "how am I feeling" signals. In a real fly they come from body sensors we do not have, so we inject them into brain neurons that normally carry the signal
+- Implementation: Craftax exposes food, drink, energy as integers 0 to 9. Map deficit to a rate, e.g. hunger rate = (9 - food) / 9 times max Hz, and drive the chosen cell type at that rate
 
 ### Hunger
 
-- NPF neurons
-  - Release a peptide (neuropeptide F) that acts as a hunger broadcast
-  - Activating them in a fed fly makes it behave as if starved (Krashes 2009)
-    - Chases food cues
-    - Accepts worse food
-- Catch
-  - NPF works by slowly releasing a chemical into the surroundings, not by fast synapses
-  - Our model only does fast synapses
-  - So we are using NPF's wiring as a proxy for its real effect
-- What the data has
-  - Only 2 NPF neurons (plus 2 related DNs)
-  - Hunger through NPF is a 2-cell channel
-- Alternatives if 2 cells is too thin
-  - Sugar-taste neurons
-    - Fast "I am touching food" signal, not a hunger state
-  - AKH-responsive neurons
-    - 4 cells
-    - Promote sugar intake and suppress water intake
-    - So they mix hunger and thirst
+- NPF neurons release a peptide that acts as a hunger broadcast
+  - Activating them in a fed fly makes it behave as if starved: chases food cues, accepts worse food (Krashes 2009)
+- Catch: NPF works by slow chemical release, not fast synapses. We are using its wiring as a proxy
+- What the data has: only 2 NPF neurons (plus 2 related DNs). Hunger through NPF is a 2-cell channel
 
 ### Thirst
 
-- ppk28 neurons
-  - Water-taste sensors on the mouthparts and legs
+- ppk28 neurons are water-taste sensors on the mouthparts and legs
   - Activating them makes a fly extend its proboscis and drink, even with no water present (Cameron 2010)
-- ISNs
-  - 2 neurons in the mouth region (SEZ)
-  - Sense blood osmolality, the fly's actual "am I dehydrated" sensor
-  - Inhibited when dehydrated, which promotes drinking
-- What the data has
-  - No ppk28 or water label at all
-  - Only 275 head taste neurons survive the VNC cut
-    - Labelled by body part, not by what they taste
-  - Nearest proxies
-    - Humidity-sensing neurons (66 cells)
-    - A hand-picked mouthpart taste type
+- What the data has: no ppk28 or water label at all
+  - Only 275 head taste neurons survive the VNC cut, labelled by body part, not by what they taste
+  - Nearest proxies: humidity-sensing neurons (66 cells) or a hand-picked mouthpart taste type
 
 ### Fatigue and sleep
 
-- Flies sleep
-  - Sleep pressure builds while awake
-  - Tracked by a circuit in the central complex, the fly's navigation and state hub
+- Flies sleep. Sleep pressure builds while awake and is tracked in the central complex, the fly's navigation and state hub
 
 <img src="img/04_central_complex_hulse2021.png" width="640" alt="Central complex anatomy: ellipsoid body, fan-shaped body, protocerebral bridge, noduli">
 
-- Reading the figure (Hulse et al. 2021, eLife, Fig 1, panels A and C)
-  - Panel A: the central complex (CX, blue) sits dead centre in the brain. The left optic lobe is coloured (ME red, LO purple), the right one is left grey. SEZ (yellow) is the mouth region where taste comes in
-  - Panel C: the four parts. EB (ellipsoid body, red ring) is where the ER5 sleep counter lives. FB (fan-shaped body, blue) is the "dFB" structure, its upper layers are the ones the sleep literature refers to
-    - The layers are not drawn here, the FB just appears as one blob
-  - The CX is also the fly's compass and navigation hub, which is why DNa02 steering takes input from here
+- Hulse et al. 2021. Panel A: the central complex (CX, blue) sits dead centre in the brain. Panel C: its parts. EB (red ring) holds the ER5 sleep counter, FB (blue) is the "dFB" structure
 - dFB neurons (dorsal fan-shaped body)
   - The textbook sleep switch: activate them and the fly sleeps (Donlea 2011, 2014)
-  - Sleep here is a state, not a movement
-    - This is why the spec maps sleep to dFB activity rather than to a DN
-- Catch
-  - In 2023 the classic dFB experiments were shown to be contaminated by unrelated VNC neurons in the same genetic tool (De 2023)
-  - A 2025 follow-up says dFB does still promote sleep but needs stronger drive than thought (Jones 2025)
-  - The link survives but is weaker than the textbooks say
-- ER5 (also called R5) ring neurons
-  - In the ellipsoid body, upstream of dFB
-  - The sleep-pressure counter: firing rises with time awake
-  - Better characterised than dFB
+  - Sleep here is a state, not a movement, which is why the spec maps sleep to dFB activity rather than to a DN
+  - Catch: the classic experiments were later shown to be contaminated by unrelated VNC neurons (De 2023). dFB does still promote sleep but needs stronger drive than thought (Jones 2025)
+- ER5 ring neurons in the ellipsoid body are the sleep-pressure counter upstream of dFB. Firing rises with time awake. Better characterised than dFB
 - What the data has
-  - No "dFB" label
-  - The dorsal fan-shaped body layers are FB6 and FB7
-    - 140 neurons across 43 types
-    - The data does not say which of them are the sleep ones
+  - No "dFB" label. The dorsal FB layers are FB6 and FB7 (140 neurons, 43 types), with no marker for which are the sleep ones
   - ER5 exists as a clean 21-neuron type
 
 ## Movement: actions out
 
-- The fly cannot move directly from the brain
-  - It sets DN activity
-  - The VNC turns that into leg movements
-  - We skip the VNC and read DN activity as the action
-- Forward: DNp09
-  - Activating it makes the fly walk forward
-  - Slight bias toward turning to the same side
-  - Also used in courtship chasing (Bidaye 2020)
+- The fly cannot move directly from the brain. It sets DN activity and the VNC turns that into leg movements. We skip the VNC and read DN activity as the action
+- Forward: DNp09. Activating it makes the fly walk forward (Bidaye 2020)
 - Turn: DNa02 and DNa01
-  - Each side's neuron drives a turn toward that side
-  - Left-minus-right firing predicts how fast the fly rotates
-  - DNa02
-    - Quick turns
-    - Direct input from the heading-versus-goal comparison in the navigation hub
-  - DNa01
-    - Slower, sustained turns (Rayshubskiy 2024)
+  - Each side's neuron drives a turn toward that side. Left-minus-right firing predicts how fast the fly rotates
+  - DNa02: quick turns, direct input from the heading-versus-goal comparison in the navigation hub
+  - DNa01: slower, sustained turns (Rayshubskiy 2024)
+
 <img src="img/05_descending_neurons_DNa01_DNa02_rayshubskiy2025.png" width="420" alt="DNa01 and DNa02 steering neurons: shape, and firing versus turning velocity">
 
-- Reading the figure (Rayshubskiy et al. 2025, eLife, Fig 1, panels A, D, E)
-  - Panel A: one DNa01 and one DNa02 drawn in the CNS outline. Cell body and inputs in the brain, one axon down into the VNC
-  - Panel D: a walking fly on a ball. Stars mark turns toward the recorded side (blue rotational velocity trace). Both neurons' voltage (bottom two traces) rises at each star
-  - Panel E: cross-correlation between the two neurons' firing. The peak sits at a small negative lag, meaning DNa02 fires slightly before DNa01. This is the fast vs slow distinction in the bullets above
-  - What we read out is the same quantity: DNa02 activity on one side minus the other, as the turn command
-- Backward: MDN, the "moonwalker" neuron
-  - Activate it and the fly walks backward
-  - Silence it and the fly cannot back away from obstacles (Bidaye 2014)
-- Stop
-  - There is no single stop neuron
-  - At least two separate mechanisms depending on context (Sapkal 2024)
-    - One switches walking commands off
-    - One actively brakes the legs
-  - "Low DNp09" as the noop signal is a simplification
-- What the data has
-  - DNp09, DNa01, DNa02 as left/right pairs
-  - MDN as 4 cells
-  - All present and cleanly labelled
+- Rayshubskiy et al. 2025. Panel A: one DNa01 and one DNa02, cell body in the brain, axon down into the VNC. Panel D: a fly walking on a ball, both neurons' voltage rises at every turn (stars). Panel E: DNa02 fires slightly before DNa01
+- Backward: MDN, the "moonwalker" neuron. Activate it and the fly walks backward (Bidaye 2014)
+- Stop: there is no single stop neuron. Stopping uses at least two context-dependent mechanisms (Sapkal 2024). "Low DNp09" as noop is a simplification
+- What the data has: DNp09, DNa01, DNa02 as left/right pairs, MDN as 4 cells. All cleanly labelled
 - Implementation sketch
   - After each brain window, read spike rates
-  - Turn signal = rate(DNa02 right) - rate(DNa02 left)
-    - Optionally add the DNa01 pair
-  - Forward signal = rate(DNp09) - rate(MDN)
-  - Pick the action with the largest signal
-    - Noop when everything is below a floor
-  - This is the zero-shot readout
+  - Turn signal = rate(DNa02 right) - rate(DNa02 left). Forward signal = rate(DNp09) - rate(MDN)
+  - Pick the action with the largest signal, noop when all are below a floor
   - The trained alternative replaces the hand-picked signals with a learned linear layer over all 1,314 DN rates
-- Important caveat
-  - None of these locomotion DNs (DNp09, DNa01, DNa02, MDN) were tested in the Shiu simulation model we are copying
-  - Shiu tested feeding (sugar, water, bitter, MN9) and grooming circuits, and deliberately avoided DNs because they were incomplete in their dataset
-  - The DN mapping comes from optogenetics on real flies plus hobby projects
+- Caveat: none of these locomotion DNs were tested in the Shiu model. Shiu tested feeding and grooming circuits and deliberately avoided DNs. The DN mapping comes from optogenetics on real flies plus hobby projects
 
 ## "Do": interact with the thing in front
 
-- Two candidate circuits, both about acting on something in front of the fly
 - Feeding
-  - Sugar-taste neurons on the mouthparts connect through the SEZ to MN9
-  - MN9 is the motor neuron that extends the proboscis
-  - The one pathway the Shiu model was actually calibrated on
-    - 100 Hz sugar input gives about 80% of max MN9 firing
+  - Sugar-taste neurons on the mouthparts connect through the SEZ to MN9, the motor neuron that extends the proboscis
+  - This is the pathway the Shiu model's one free constant was calibrated on: 100 Hz sugar input gives about 80% of max MN9 firing
   - MN9 exists in our data as 2 cells
 
 <img src="img/06_lif_model_sugar_mn9_shiu2024.png" width="700" alt="Shiu et al. 2024 Figure 1: LIF model schematic, the sugar to MN9 feeding circuit, and predicted MN9 firing rate versus sugar input">
 
-- Reading the figure (Shiu et al. 2024, Nature, Fig 1, panels a to c)
-  - Panel a: the LIF model in one picture. A grey neuron with 80 synapses onto green and 40 onto blue. Each grey spike (arrows) bumps green twice as hard as blue. One spike alone decays away. Three close spikes push green over threshold, blue never gets there
-  - Panel b: the feeding circuit the model reproduces. Sugar taste neurons, three layers of interneurons, then MN9 which extends the proboscis. This pathway is where the model's one free constant was calibrated
-  - Panel c: the calibration curve. Drive sugar neurons at X Hz, read MN9 rate. Contralateral MN9 responds more than ipsilateral. Our port must reproduce this curve (on FlyWire, the dataset it was made for)
+- Shiu et al. 2024, Fig 1. Panel a: the LIF model in one picture, a grey neuron with 80 synapses onto green and 40 onto blue, three close spikes fire green and never blue. Panel b: sugar neurons, three layers of interneurons, then MN9. Panel c: the calibration curve our port must reproduce
 
 <img src="img/07_proboscis_extension_reflex.jpg" width="420" alt="Fruit fly extending its proboscis toward sucrose">
 
-- Left: resting. Right: proboscis extended toward a sugar drop, the behaviour MN9 drives (Wikimedia Commons, CC BY-SA)
+- Left: resting. Right: proboscis extended toward a sugar drop, the behaviour MN9 drives
 - Aggression / lunge
-  - The spec named pC1 and aIP-g
-  - Correction from the literature
-    - aIPg and pC1d are the female aggression circuit (Schretter 2020)
-    - In males, attack runs through P1/pC1 neurons and "MAP" neurons (Hoopfer 2015, Chiu 2021)
-    - Our dataset is a male fly
-- What the data has
-  - 49 pC1 subtypes (156 neurons)
-  - 14 aIPg subtypes (56 neurons)
-  - No single clean "attack" label
-- Implementation sketch
-  - "Do" fires when MN9 rate exceeds a floor
-    - Optionally also the attack population rate
-  - In Craftax the same button eats, drinks, hits, and chops
-    - So one output channel covers all of them
+  - The spec named pC1 and aIP-g, but those are the female aggression circuit (Schretter 2020). Male attack runs through P1/pC1 and MAP neurons (Hoopfer 2015, Chiu 2021). Our dataset is a male fly
+  - What the data has: 49 pC1 subtypes (156 neurons), 14 aIPg subtypes (56 neurons), no single clean "attack" label
+- Implementation sketch: "do" fires when MN9 rate exceeds a floor. In Craftax the same button eats, drinks, hits, and chops, so one channel covers all of them
 
 ## Why this is a strong simplification
 
-- No body
-  - Real DN commands go into a VNC full of pattern generators that produce coordinated stepping
-  - We read DNs as discrete actions instead
-- No neuromodulation
-  - Hunger, arousal, and sleep pressure in a real fly reconfigure circuits chemically over minutes
-  - We inject them as fast spikes at one cell type
-- No baseline activity
-  - The Shiu model is silent unless driven
-  - Inhibition only shows up where something is already firing
-- Net position
-  - We use the connectome for its wiring and weights
-  - The I/O mapping is an engineering choice informed by biology
-  - Not a claim of biological faithfulness
+- No body: real DN commands go into a VNC full of pattern generators. We read DNs as discrete actions instead
+- No neuromodulation: hunger, arousal, and sleep pressure reconfigure real circuits chemically over minutes. We inject them as fast spikes at one cell type
+- No baseline activity: the Shiu model is silent unless driven, so inhibition only shows up where something is already firing
+- Net position: we use the connectome for its wiring and weights. The I/O mapping is an engineering choice informed by biology, not a claim of biological faithfulness
 
 ## Open questions for spec
 
@@ -464,8 +299,3 @@ flowchart LR
 - Fatigue: FB6/FB7 tangentials (planned "dFB", unclear which), ER5 (clean, upstream), or both?
 - Turn: fuse DNa01 and DNa02 into one left-minus-right signal, or keep them separate?
 - Do: feeding pathway only, or also aggression, and if aggression, which male types?
-- (unverified) items
-  - Exact Wu 2003 NPF citation
-  - Schnaitmann eLife year
-  - Whether ppk28's lifespan role matters here
-  - D-serine circuit position
