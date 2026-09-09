@@ -12,36 +12,46 @@ High level project implementation specs
 
 ### Brain
 
-- Keep optic lobes + central brain; drop VNC (no legs in a gridworld). ~120k neurons.
-- Threshold edges >= 5 synapses. Sign by presynaptic NT (ACh +, GABA/Glu -).
-- LIF, scalar state per neuron, sparse matvec per step
-- Reference dynamics: Shiu et al. Nature 2024; runtime to copy: https://github.com/eonsystemspbc/fly-brain
-- Fits an 8 GB GPU, 4060 on this laptop ideally
-  - But can rent RunPod if not enough
+- Population: MaleCNS v1.0, all non-VNC neurons (`superclass` set and not `vnc_*`), ~146k
+  - Includes photoreceptors, visual projection, DNs, ascending neurons
+- Edges: traced-only edge file; synapse threshold is a config value, default >= 5 (~5M edges)
+- Sign by presynaptic consensus NT
+  - ACh +; GABA, glutamate, histamine -
+  - Dopamine, serotonin, octopamine + (as Shiu); `unclear` falls back to cell-type prediction, else edge dropped
+- LIF per Shiu et al. 2024, exact exponential update, dt configurable (default 0.1 ms)
+  - w = sign x synapse count x 0.275 mV; recalibrate the constant if the threshold changes
+  - Input = Poisson forced spikes on a cell-type set; output = spike counts over a window; silencing = spike mask
+  - State (v, g, delay buffer) persists across actions, resets per episode
+- JAX, sparse BCOO matvec, batched over envs, fits the 8 GB 4060; steps per action fixed after a throughput benchmark
+  - Can rent RunPod if not enough
+- Validation: Brian2 oracle (Shiu's MIT code) on a MaleCNS subgraph, spike-level agreement; sugar-GRN to MN9 curve on the full brain
+- FlyWire v783 replication is a later milestone
+- Tooling: conda env for Python, deps pinned in pyproject.toml. Project license MIT; port from Shiu's MIT code, never the GPL harness
 
 ### Env
 
-Craftax-Classic-Pixels (JAX). Two wrappers only:
-- Action mask: `noop, left, right, up, down, do, sleep`
-- Reward: survival achievements only (eat_cow, collect_drink, wake_up, defeat_zombie, defeat_skeleton, collect_sapling, eat_plant, collect_wood); zero the rest.
-Hunger/thirst/fatigue read from state struct, not rendered.
+- Craftax-Classic-Pixels-v1, two wrappers
+  - Egocentric actions: `noop, forward, backward, turn_left, turn_right, do, sleep`
+    - Turn costs a step (noop, then overwrite facing). Backward moves opposite and restores facing
+  - Reward: +1 per new survival achievement (eat_cow, collect_drink, wake_up, defeat_zombie, defeat_skeleton, collect_sapling, collect_wood) plus 0.1 x health delta; other achievements zero
+    - eat_plant dropped, unreachable without place_plant
+- food, drink, energy read from the state struct
 
 ### I/O mapping
 
 Inputs
-- pixels -> R1-R6 (brightness) and R8 (color) photoreceptors via a ring retina (~800/eye)
-- hunger -> NPF neurons; fatigue -> dFB neurons; thirst -> water-sensing gustatory neurons
+- Pixels: inventory bar cropped; radial retina centred on the agent, azimuth = angle, elevation = distance, left hemifield to left eye
+  - ~800 points per eye on the real hex column grid, inferred from photoreceptor to L1-L3 synapses
+  - Brightness sets R1-R6 rate; colour sets R8 rate (R8p blue, R8y green)
+- Hunger to NPF (`NPFL1-I`, 2 cells); thirst to hygrosensory class (66); fatigue to ER5 (21)
+  - rate = deficit / 9 x max Hz, max Hz configurable
 
 Outputs (fixed mapping, zero-shot)
-- forward: DNp09 / walk-promoting DNs
-- left/right: DNa02 (and DNa01) left-minus-right
-- backward: MDN
-- noop: low DNp09 / halting DNs
-- do: proboscis-extension pathway (SEZ -> MN9) + lunge pathway (pC1/aIP-g -> DN)
-- sleep: dFB activity (state, not a DN)
-All are cell-type labels in the annotations file.
+- forward: DNp09; backward: MDN; turn: DNa02 + DNa01 left-minus-right; do: MN9; sleep: FB6/FB7 tangentials
+- action = argmax of signals, noop when all below a floor
+- Ablation controls built in from day one: black frame, shuffled weights, disconnected inputs
 
-Trained alternative: linear readout from all ~1300 DNs -> 7 logits, PPO.
+Trained alternative: brain frozen, linear readout over 1,314 DN rates to 7 logits, PPO
 
 ### Viewer
 
@@ -52,9 +62,24 @@ All are panels
 - Real-time interactive visualization using the existing libraries to see the activations
 - Other indicators of the fly brain state or anything? TBD
 
+### Milestones
+
+- M1 loader + JAX kernel + Brian2 validation
+- M2 Craftax wrappers + retina + state encoders
+- M3 zero-shot loop with ablation controls
+- M4 PPO linear readout
+- M5 viewer
+
 ## Known Limitations
 
-No neuromodulation (hunger/arousal are injected, not emergent). No body, no VNC. Two individuals exist in total (MaleCNS, FlyWire). Achievement score alone is a readout property, not a brain property.
+- No neuromodulation: hunger, thirst, fatigue injected as spikes, not emergent
+- No body, no VNC; DN activity read as discrete actions
+- Zero baseline activity: the brain is silent unless driven, so inhibition is invisible on silent neurons
+- Locomotion DN mapping is from optogenetics and hobby projects, not validated in the Shiu model
+- Hunger is a 2-cell channel; thirst and fatigue use proxy cell types since water GRNs and dFB are unlabelled in MaleCNS
+- Lunge pathway dropped: pC1/aIPg is the female aggression circuit
+- Two individuals exist in total (MaleCNS, FlyWire)
+- Achievement score is a readout property, not a brain property
 
 ## Resources
 
@@ -65,7 +90,7 @@ No neuromodulation (hunger/arousal are injected, not emergent). No body, no VNC.
 
 MaleCNS v1.0, CC-BY, public GCS bucket, no login. Directory:
 `https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/`
-- `connectome-weights-male-cns-v1.0-minconf-0.5.feather` (1.1 GB) — edge list, synapse counts = weights
+- `connectome-weights-male-cns-v1.0-minconf-0.5-traced-only.feather` (508 MB) — edge list, synapse counts = weights, adds type columns; the 1.1 GB untraced variant is not needed
 - `body-annotations-male-cns-v1.0-minconf-0.5.feather` (13 MB) — cell types, class, side
 - `body-neurotransmitters-male-cns-v1.0.feather` (42 MB) — NT prediction per neuron -> edge sign
 Docs: https://male-cns.janelia.org/download/
