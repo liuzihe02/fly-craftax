@@ -1,6 +1,6 @@
 # Agent context
 
-Deep-research notes gathered by subagents on 2026-09-09. Reference material for design and implementation, not the spec. The spec lives in `../tracker.md`.
+Deep-research notes gathered by subagents on 2026-09-09. Reference material for design and implementation, not the spec. The spec lives in `../tracker.md`, which links here.
 
 Each file ends with an "Open questions for spec" section. Those questions are the input to the spec design step.
 

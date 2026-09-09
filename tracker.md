@@ -111,7 +111,3 @@ No connectome + Craftax/Crafter/Minigrid repo exists as of 2026-09-09.
 > Gathering context is extremely important - at any time before coding - you should be sure you absolutely have ALL the relevant context needed to accomplish xxx task correctly. Don't worry - you have way more than enough context for this (I use 1M model always). If anything the strictest and only thing the user (I) do is purely context management - making sure you get the right and enough context. The worst thing you can do is, because you didn't gather the full context, you did something that did not integrate well with other code or didn't take into account core concepts. So make sure you always have enough, and the right, context before doing any tasks
 > When editing these bits, ALWAYS have point form: make generous use of the bullets, sub-bullets, subsub-bullets, subsubsub-bullets etc. Each idea should be its own distinct point or line!!
 > You will have quite alot of autonomy on this project to lead the directions and implementations etc. Should be clean clear code but we do value task progress
-
-## Agent Context
-
-Deep research, agent managed context gathered from deep research of subagents of various resources
