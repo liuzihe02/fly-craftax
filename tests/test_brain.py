@@ -111,7 +111,9 @@ def test_matches_oracle_on_malecns_subgraph():
     got = run_jax_with_kicks(len(nodes), pre, post, sc, kicks, p)
     assert ref.sum() > 1000
     # 2 of 4M raster cells differ: neuron 110 fires at t=1131 instead of 1130, after
-    # 3542 identical spikes. At t=1130 the kernel's v sits 4.8e-6 mV (1.3 float32 ULPs)
-    # under v_th while Brian2's float64 lands just over it. Spike totals match exactly
-    # (6283 each) and no other neuron differs, so this is accumulation precision.
+    # 3542 identical spikes. At t=1130 the kernel's float32 v is -45.000004, exactly one
+    # float32 ULP under v_th = -45.0, while Brian2's float64 lands just over. Spike totals
+    # match exactly (6283 each) and no other neuron differs: accumulation precision.
     assert np.mean(got == ref) > 0.999
+    assert np.array_equal(got.sum(0), ref.sum(0))  # a one-step shift moves no spike between neurons
+    assert ref[:, len(seeds):].sum() > 100  # propagation to undriven neurons, not just seed echo
