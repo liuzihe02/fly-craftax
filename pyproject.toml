@@ -1,0 +1,27 @@
+[project]
+name = "flycraftax"
+version = "0.0.1"
+description = "A fruit-fly connectome plays Craftax"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "jax[cuda12]",
+    "numpy",
+    "pandas",
+    "pyarrow",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "brian2"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["flycraftax*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: needs the full MaleCNS data and a GPU"]
+addopts = "-m 'not slow'"
