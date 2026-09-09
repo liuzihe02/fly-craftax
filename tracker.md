@@ -67,7 +67,7 @@ All are panels
 - [ ] M1 loader + JAX kernel + Brian2 validation, plan: `docs/plans/2026-09-09-m1-brain.md`
   - [x] scaffold, pinned env, data download
   - [x] connectome loader with cache
-  - [ ] Brian2 oracle
+  - [x] Brian2 oracle
   - [ ] JAX LIF kernel, spike-for-spike match on toy graphs
   - [ ] oracle match on a 2000-neuron MaleCNS subgraph
   - [ ] full-brain throughput benchmark on the 4060
