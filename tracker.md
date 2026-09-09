@@ -69,7 +69,7 @@ All are panels
   - [x] connectome loader with cache
   - [x] Brian2 oracle
   - [x] JAX LIF kernel, spike-for-spike match on toy graphs
-  - [ ] oracle match on a 2000-neuron MaleCNS subgraph
+  - [x] oracle match on a 2000-neuron MaleCNS subgraph
   - [ ] full-brain throughput benchmark on the 4060
   - [ ] MN9 smoke check with labellar GRN drive
 - [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
