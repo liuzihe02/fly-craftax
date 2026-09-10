@@ -77,7 +77,7 @@ def rate_for_hz(hz, p):
     return hz * p.dt_ms / 1000.0
 
 
-def step(W, rfc, p, state, kick_prob, silence, key):
+def step(W, rfc, p, state, kick_prob, silence, key, bias=None):
     """One dt of the Shiu LIF, in Brian2's slot order.
 
     Measured Brian2 semantics (probe, 2026-09-09), reproduced here:
@@ -99,6 +99,8 @@ def step(W, rfc, p, state, kick_prob, silence, key):
     active = refrac == 0
     v = jnp.where(active, p.v_rest + b * (state.v - p.v_rest) + c * state.g, state.v)
     g = jnp.where(active, a * state.g, state.g)
+    if bias is not None:                                  # tonic input, dropped while refractory
+        v = jnp.where(active, v + bias, v)
     spikes = active & (v > p.v_th)                        # Brian2: (v > v_th) and not_refractory
     slot = state.t % p.n_dly                              # ring: read the oldest slot, then reuse it
     delayed = jax.lax.dynamic_index_in_dim(state.buf, slot, 0, False) * silence   # (B, N)
@@ -114,9 +116,9 @@ def step(W, rfc, p, state, kick_prob, silence, key):
     return BrainState(v, g, refrac, buf, state.counts + sp, state.t + 1), spikes
 
 
-def run_window(W, rfc, p, state, kick_prob, silence, key, n_steps):
+def run_window(W, rfc, p, state, kick_prob, silence, key, n_steps, bias=None):
     def body(carry, k):
-        st, _ = step(W, rfc, p, carry, kick_prob, silence, k)
+        st, _ = step(W, rfc, p, carry, kick_prob, silence, k, bias)
         return st, None
     keys = jax.random.split(key, n_steps)
     state, _ = jax.lax.scan(body, state, keys)

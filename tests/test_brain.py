@@ -163,3 +163,33 @@ def test_mn9_responds_to_labellar_drive(conn):
     peak = r_on[:, mn9].max(axis=1)  # max over both sides; MN9_R never fires on MaleCNS, see tracker M1
     assert bool((peak > 0).all())
     assert float(peak.mean()) > 2.0
+
+
+def test_bias_makes_a_resting_rate_that_inhibition_lowers():
+    """A lone neuron with bias 0.06 mV/step fires ~50 Hz; a strong inhibitory input from a kicked neuron lowers it."""
+    p = BrainParams()
+    n, n_steps = 2, 10_000                      # 1 s
+    bias = jnp.array([0.06, 0.0], jnp.float32)  # neuron 0 tonic, neuron 1 silent unless kicked
+    W0 = build_weights(n, np.array([], int), np.array([], int), np.array([], np.float32), p)
+    rfc = rfc_steps(n, np.array([1]), p)
+    silence = jnp.ones(n)
+    key = jax.random.PRNGKey(0)
+    st = run_window(W0, rfc, p, init_state(n, 1, p), jnp.zeros((1, n)), silence, key, n_steps, bias=bias)
+    rest = float(rate_hz(st.counts, n_steps, p)[0, 0])
+    assert 35 < rest < 70
+    W1 = build_weights(n, np.array([1]), np.array([0]), np.array([-300.0], np.float32), p)   # neuron 1 inhibits neuron 0
+    kick = jnp.zeros((1, n)).at[0, 1].set(rate_for_hz(100.0, p))
+    st = run_window(W1, rfc, p, init_state(n, 1, p), kick, silence, key, n_steps, bias=bias)
+    inhibited = float(rate_hz(st.counts, n_steps, p)[0, 0])
+    assert inhibited < 0.5 * rest
+
+
+def test_bias_none_matches_zero_bias():
+    p = BrainParams()
+    n = 3
+    W = build_weights(n, np.array([0]), np.array([1]), np.array([300.0], np.float32), p)
+    rfc = rfc_steps(n, np.array([0]), p)
+    kick = jnp.zeros((1, n)).at[0, 0].set(rate_for_hz(50.0, p))
+    a = run_window(W, rfc, p, init_state(n, 1, p), kick, jnp.ones(n), jax.random.PRNGKey(1), 500)
+    b = run_window(W, rfc, p, init_state(n, 1, p), kick, jnp.ones(n), jax.random.PRNGKey(1), 500, bias=jnp.zeros(n))
+    assert np.array_equal(np.asarray(a.counts), np.asarray(b.counts))

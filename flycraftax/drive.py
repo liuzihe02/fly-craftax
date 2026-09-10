@@ -10,6 +10,8 @@ from flycraftax.brain import BrainParams, rate_for_hz
 from flycraftax.data import Connectome
 from flycraftax.retina import Retina, sample
 
+LAMINA = ("L1", "L2", "L3", "L4", "L5")  # monopolar cells: tonic at rest, hyperpolarised by light
+
 
 @dataclass
 class Drive:
@@ -20,12 +22,15 @@ class Drive:
     n_retina: int
     groups: tuple  # (npf_idx, hyg_idx, er5_idx) int32 arrays, driven by food, drink, energy
     max_hz: float
+    bias: np.ndarray  # float32 (N,) mV per step of tonic input; non-zero on the lamina only
 
 
-def build_drive(conn: Connectome, retina: Retina, max_hz: float = 100.0) -> Drive:
+def build_drive(conn: Connectome, retina: Retina, max_hz: float = 100.0, lamina_mv: float = 0.0) -> Drive:
     groups = (conn.index(types=["NPFL1-I"]), conn.index(cls="hygrosensory"), conn.index(types=["ER5"]))
     idx = np.concatenate([retina.idx, *groups]).astype(np.int32)
-    return Drive(retina=retina, idx=idx, n_retina=len(retina.idx), groups=groups, max_hz=max_hz)
+    bias = np.zeros(conn.n, np.float32)
+    bias[conn.index(types=list(LAMINA))] = lamina_mv
+    return Drive(retina=retina, idx=idx, n_retina=len(retina.idx), groups=groups, max_hz=max_hz, bias=bias)
 
 
 def drive_rates(drive: Drive, obs, env_state) -> jax.Array:

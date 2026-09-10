@@ -20,7 +20,8 @@ def _toy_drive():
                     u=np.zeros(2, np.float32), v=np.ones(2, np.float32), channel=np.zeros(2, np.int8))
     groups = (np.array([20], np.int32), np.array([30, 31], np.int32), np.array([40], np.int32))
     idx = np.concatenate([retina.idx, *groups])
-    return Drive(retina=retina, idx=idx, n_retina=2, groups=groups, max_hz=100.0)
+    return Drive(retina=retina, idx=idx, n_retina=2, groups=groups, max_hz=100.0,
+                 bias=np.zeros(50, np.float32))
 
 
 def test_rates_layout_and_deficits():
@@ -56,3 +57,19 @@ def test_build_drive_real_sizes(conn):
     assert [len(g) for g in d.groups] == [2, 66, 21]
     assert len(d.idx) == d.n_retina + 89
     assert len(np.unique(d.idx)) == len(d.idx)
+
+
+def test_bias_field_on_toy():
+    d = _toy_drive()
+    assert d.bias.shape == (50,) and d.bias.sum() == 0.0
+
+
+@pytest.mark.slow
+def test_build_drive_lamina_bias(conn):
+    from flycraftax.drive import LAMINA, build_drive
+    from flycraftax.retina import build_retina
+    d = build_drive(conn, build_retina(conn), lamina_mv=0.06)
+    lam = conn.index(types=list(LAMINA))
+    assert len(lam) > 8000
+    assert np.allclose(d.bias[lam], 0.06) and float(np.abs(d.bias).sum()) == pytest.approx(0.06 * len(lam), rel=1e-5)
+    assert len(np.intersect1d(lam, d.idx)) == 0    # lamina cells are biased, never kicked
