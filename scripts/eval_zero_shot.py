@@ -34,7 +34,7 @@ def main(n_actions=2000, batch=8, out=Path("outputs")):
     results = {}
     for ablation, policy in CONDITIONS:
         name = f"{ablation}/{policy}"
-        agent = build_agent(conn, drive, readout, p, ablation=ablation)
+        agent = build_agent(conn, drive, readout, p, wiring="shuffled" if ablation == "shuffled" else "full")
         logs = rollout(agent, env, jax.random.PRNGKey(0), n_actions, batch, ablation=ablation, policy=policy)
         results[name] = r = summarise(logs, n_actions)
         print(f"{name:22s} survival {np.mean(r['survival']):7.1f}  reward/action {r['reward']:+.4f}  "

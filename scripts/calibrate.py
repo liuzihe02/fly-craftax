@@ -32,11 +32,9 @@ def main(n_actions=300, batch=4, out=Path("outputs/calibration.png")):
     for w_syn, mv in GRID:
         drive = build_drive(conn, retina, MAX_HZ, lamina_mv=mv)
         agent = build_agent(conn, drive, blank, BrainParams(w_syn=w_syn))
-        # `black` only blanks the frame, so the brain is the one built above; rollout still
-        # checks the label against the agent's, hence the second build rather than a bare kwarg
-        dark = build_agent(conn, drive, blank, BrainParams(w_syn=w_syn), ablation="black")
         full = rollout(agent, env, jax.random.PRNGKey(0), n_actions, batch, policy="random")
-        black = rollout(dark, env, jax.random.PRNGKey(0), 60, batch, ablation="black", policy="random")
+        # `black` only blanks the frame, so the same agent runs both
+        black = rollout(agent, env, jax.random.PRNGKey(0), 60, batch, ablation="black", policy="random")
         sig = np.asarray(full["sig"]).reshape(-1, 6)
         row = dict(w_syn=w_syn, lamina_mv=mv, mean=sig.mean(0).tolist(), std=sig.std(0).tolist(),
                    nonzero=int((sig.std(0) > 0).sum()), active=float(np.asarray(full["active"]).mean()),

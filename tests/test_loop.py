@@ -42,3 +42,24 @@ def test_summarise_survival_achievements_and_histogram():
     assert r["survival"] == [3, 4]
     assert r["achievements"][3] == 1 and r["achievements"][4] == 0 and r["achievements"][5] == 1
     assert sum(r["action_hist"]) == pytest.approx(1.0) and r["reward"] == pytest.approx(0.5)
+
+
+@pytest.mark.slow
+def test_linear_policy_rollout(conn):
+    from flycraftax.brain import BrainParams
+    from flycraftax.drive import build_drive
+    from flycraftax.env import make_env
+    from flycraftax.loop import build_agent, rollout
+    from flycraftax.ppo import init_params
+    from flycraftax.readout import Readout, readout_groups, std_floor
+    from flycraftax.retina import build_retina
+    drive = build_drive(conn, build_retina(conn), 100.0, lamina_mv=0.04)
+    groups = readout_groups(conn)
+    agent = build_agent(conn, drive, Readout(groups, np.zeros(6, np.float32), std_floor(groups)), BrainParams())
+    assert agent.dn_idx.shape == (1314,)
+    params = init_params(len(agent.dn_idx))
+    env = make_env(2)
+    logs = rollout(agent, env, jax.random.PRNGKey(0), 3, 2, policy="linear", params=params)
+    assert logs["feats"].shape == (3, 2, 1314) and logs["logp"].shape == (3, 2) and logs["value"].shape == (3, 2)
+    assert np.allclose(np.asarray(logs["logp"]), np.log(1 / 7), atol=1e-5)   # zero params: uniform policy
+    assert logs["ep_return"].shape == (3, 2) and logs["ep_done"].dtype == bool
