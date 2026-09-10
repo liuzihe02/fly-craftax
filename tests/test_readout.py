@@ -1,3 +1,4 @@
+import jax
 import jax.numpy as jnp
 import numpy as np
 import pytest
@@ -36,11 +37,13 @@ def test_act_argmax_and_floor():
     assert int(a[0]) == NOOP
     a, _ = act(ro, _rates(sleep=2, forward=1))
     assert int(a[0]) == SLEEP
+    a, _ = jax.jit(lambda r: act(ro, r))(_rates(backward=5))
+    assert int(a[0]) == BACKWARD
 
 
 def test_std_floor_is_one_spike_per_window():
     from flycraftax.readout import std_floor
-    assert np.allclose(std_floor(_groups()), [2.5, 5.0, 2.5, 2.5, 5.0, 5.0 / 3])
+    assert np.allclose(std_floor(_groups()), [25.0, 50.0, 25.0, 25.0, 50.0, 50.0 / 3])
 
 
 def test_save_load_roundtrip(tmp_path):
@@ -54,7 +57,7 @@ def test_save_load_roundtrip(tmp_path):
     ro, cfg = load_readout(Conn(), p)
     assert cfg["w_syn"] == 0.44 and cfg["lamina_mv"] == 0.06 and cfg["max_hz"] == 100.0
     assert np.allclose(ro.mean, np.arange(6.0))
-    assert np.all(ro.std >= 5.0 / 2)
+    assert np.all(ro.std >= 50.0 / 2)
 
 
 @pytest.mark.slow

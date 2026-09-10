@@ -7,13 +7,14 @@ from pathlib import Path
 import jax.numpy as jnp
 import numpy as np
 
+from flycraftax.brain import STEPS_PER_ACTION, BrainParams
 from flycraftax.env import BACKWARD, DO, FORWARD, NOOP, SLEEP, TURN_LEFT, TURN_RIGHT
 
 SIGNALS = ("forward", "backward", "turn_left", "turn_right", "do", "sleep")
 SIGNAL_ACTION = np.array([FORWARD, BACKWARD, TURN_LEFT, TURN_RIGHT, DO, SLEEP], np.int32)
 GROUP_NAMES = ("forward", "backward", "turn_l", "turn_r", "do", "sleep")
 NORM_PATH = Path(__file__).with_name("readout_norm.json")
-SPIKE_HZ = 5.0  # one spike in a 200-step window of 0.1 ms
+SPIKE_HZ = 1000.0 / (STEPS_PER_ACTION * BrainParams().dt_ms)  # 50 Hz: one spike in one window
 
 
 def readout_groups(conn):
