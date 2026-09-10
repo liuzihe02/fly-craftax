@@ -14,7 +14,7 @@ from craftax.craftax_classic.renderer import make_craftax_pixel_renderer
 from flycraftax.env import ACTIONS
 from flycraftax.readout import SIGNALS
 
-BODY, WING, HEAD = (40, 30, 30, 255), (200, 220, 255, 140), (20, 20, 20, 255)
+BODY, WING, HEAD = (40, 30, 30, 255), (200, 220, 255, 140), (230, 200, 60, 255)
 
 
 def _draw(sleeping):
@@ -78,25 +78,35 @@ def soma_xy(conn, data_dir=Path("data")):
     # left and right of a frontal view of the brain (checked by colouring the ol_* superclasses
     # in a scatter). (x, z) puts the same lobes side by side but z also carries the
     # neck/VNC-projecting somata out to 134k, squashing the brain into the bottom sixth.
+    # y increases ventrally, so `compose` inverts the brain panel's y axis to put dorsal up.
     return xyz[:, :2]
 
 
-def compose(frame64, counts, xy, groups, z, action, meters, z_floor):
-    """One 16x9 panel: game frame, brain activity, the six z-scores and the meters."""
-    fig, ax = plt.subplots(1, 3, figsize=(16, 9), dpi=80, gridspec_kw=dict(width_ratios=[1.1, 1.3, 0.6]))
-    ax[0].imshow(np.asarray(frame64) / 255.0)
-    ax[0].set_axis_off()
-    ax[0].set_title("Craftax")
+def compose(frame64, counts, xy, groups, z, action, meters, z_floor, vmax=None):
+    """One 16x9 panel: game frame, brain activity, the six z-scores and the meters.
+
+    `vmax` fixes the spike-count colour scale (pass one scale for a whole run so frames compare);
+    None picks this window's 95th percentile.
+    """
+    fig = plt.figure(figsize=(16, 9), dpi=80)
+    gs = fig.add_gridspec(2, 3, width_ratios=[1.1, 1.3, 0.6])
+    ax_game, ax_brain = fig.add_subplot(gs[:, 0]), fig.add_subplot(gs[:, 1])
+    ax_sig, ax_met = fig.add_subplot(gs[0, 2]), fig.add_subplot(gs[1, 2])
+    ax_game.imshow(np.asarray(frame64) / 255.0)
+    ax_game.set_axis_off()
+    ax_game.set_title("Craftax")
     ok = ~np.isnan(xy[:, 0])
-    ax[1].scatter(xy[ok, 0], xy[ok, 1], s=1, c="#dddddd", linewidths=0)
+    ax_brain.scatter(xy[ok, 0], xy[ok, 1], s=1, c="#dddddd", linewidths=0)
     hot = ok & (counts > 0)
-    vmax = max(1.0, float(np.percentile(counts[hot], 95)) if hot.any() else 1.0)
-    ax[1].scatter(
+    if vmax is None:
+        vmax = float(np.percentile(counts[hot], 95)) if hot.any() else 1.0
+    vmax = max(1.0, vmax)
+    ax_brain.scatter(
         xy[hot, 0], xy[hot, 1], s=3, c=counts[hot], cmap="inferno", vmin=0, vmax=vmax, linewidths=0
     )
     for g in groups.values():
         gg = g[ok[g]]
-        ax[1].scatter(
+        ax_brain.scatter(
             xy[gg, 0],
             xy[gg, 1],
             s=40,
@@ -104,21 +114,20 @@ def compose(frame64, counts, xy, groups, z, action, meters, z_floor):
             edgecolors="cyan" if counts[gg].sum() == 0 else "red",
             linewidths=1,
         )
-    ax[1].set_aspect("equal")
-    ax[1].set_axis_off()
-    ax[1].set_title(f"{int(hot.sum())} neurons spiking this window")
-    ax[2].barh(range(6), z, color=["red" if i == np.argmax(z) and z[i] >= z_floor else "grey" for i in range(6)])
-    ax[2].axvline(z_floor, color="k", ls="--")
-    ax[2].set_yticks(range(6))
-    ax[2].set_yticklabels(SIGNALS)
-    ax[2].set_xlim(-3, 5)
-    ax[2].set_title(f"action: {ACTIONS[int(action)]}")
-    ins = ax[2].inset_axes([0.0, -0.45, 1.0, 0.3])
+    ax_brain.set_aspect("equal")
+    ax_brain.invert_yaxis()   # soma y increases ventrally, so flip it to put dorsal up
+    ax_brain.set_axis_off()
+    ax_brain.set_title(f"{int(hot.sum())} neurons spiking this window")
+    ax_sig.barh(range(6), z, color=["red" if i == np.argmax(z) and z[i] >= z_floor else "grey" for i in range(6)])
+    ax_sig.axvline(z_floor, color="k", ls="--")
+    ax_sig.set_yticks(range(6))
+    ax_sig.set_yticklabels(SIGNALS)
+    ax_sig.set_xlim(-3, 5)
+    ax_sig.set_title(f"action: {ACTIONS[int(action)]}")
     names = ["health", "food", "drink", "energy"]
-    ins.bar(range(4), [meters[k] for k in names], color=["crimson", "orange", "dodgerblue", "gold"])
-    ins.set_xticks(range(4))  # the inset inherits the parent axes' unit state, so no string x
-    ins.set_xticklabels(names)
-    ins.set_ylim(0, 9)
+    ax_met.bar(names, [meters[k] for k in names], color=["crimson", "orange", "dodgerblue", "gold"])
+    ax_met.set_ylim(0, 9)
+    ax_met.set_title("meters")
     fig.tight_layout()
     fig.canvas.draw()
     img = np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()

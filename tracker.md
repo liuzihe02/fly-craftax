@@ -101,9 +101,10 @@ All are panels
   - [x] loop step factory with a parameterised linear policy
   - [x] PPO training function, fully jitted
   - [ ] train, greedy evaluation against the M3 baselines
-- [ ] M5 viewer, plan: `docs/plans/2026-09-10-m5-viewer.md`
+- [x] M5 viewer, plan: `docs/plans/2026-09-10-m5-viewer.md`
   - [x] fly sprites in the renderer, soma map, panel composition
-  - [ ] viewer script: frames, slider page, GIF
+  - [x] viewer script: frames, slider page, GIF
+    - 300 actions of `full`/`readout` rendered eagerly: `outputs/viewer/frames/0000.png` .. `0299.png`, `outputs/viewer/index.html` (slider and play over the frames), `outputs/viewer.gif` (300 frames, 640x360, 10 fps). One colour scale for the whole run (95th percentile of non-zero window counts over the first 20 windows). Follow-up: a live 3-D view of the same activity with navis, instead of the 2-D soma projection over pre-rendered frames
 
 ## Known Limitations
 

@@ -66,7 +66,8 @@ def init_carry(agent, env, key, batch):
     return obs, env_state, init_state(agent.n, batch, agent.p)
 
 
-def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, greedy=False, obs0=None):
+def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, greedy=False, obs0=None,
+              keep_counts=False):
     """The scan body: step((obs, env_state, brain, params), key) -> (carry, log).
 
     `params` is None for readout and random, and a dict with W, b, vw, vb for linear; it rides in
@@ -112,7 +113,9 @@ def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, 
         )
         if keep_frames:
             log["frame"] = obs[0]        # the frame that drove this action, env 0 only
-        brain = reset_envs(brain, done, agent.p)   # after the log: active and lamina are pre-reset
+        if keep_counts:
+            log["counts"] = brain.counts  # (B, N) spikes in this window; the viewer's only use
+        brain = reset_envs(brain, done, agent.p)   # after the log: active, lamina and counts are pre-reset
         return (obs2, env_state2, brain, params), log
 
     return step
