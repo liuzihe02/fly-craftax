@@ -82,7 +82,7 @@ All are panels
   - [x] photoreceptor retinotopy from lamina and medulla synapses
     - 2,182 photoreceptors mapped onto 491 left and 585 right columns; 1,983 outer photoreceptors are untraced fragments absent from the traced-only edge file, so left-eye luminance covers only the outer half of elevations. The full 1.1 GB edge file would recover them (follow-up decision)
   - [x] radial retina sampler rotated by facing, visual check
-  - [ ] drive assembly: retina plus hunger, thirst, fatigue
+  - [x] drive assembly: retina plus hunger, thirst, fatigue
   - [ ] integration rollout through env, drive, brain, visual check
 - [ ] M3 zero-shot loop with ablation controls
 - [ ] M4 PPO linear readout
