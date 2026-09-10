@@ -57,7 +57,7 @@ def main(n_actions=300, warm=20, out=Path("outputs/viewer")):
         for frame, counts, z, action, meters in pending:
             img = compose(frame, counts, xy, readout.groups, z, action, meters, readout.z_floor, vmax=vmax)
             imageio.imwrite(out / "frames" / f"{len(frames):04d}.png", img)
-            frames.append(img[::2, ::2])
+            frames.append(img[::2, ::2].copy())   # a view would pin the full-size frame in the GIF list
         pending.clear()
         if i % 50 == 0:
             print(i, flush=True)

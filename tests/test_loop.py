@@ -17,7 +17,8 @@ def test_rollout_shapes_and_finiteness(conn, ablation, policy):
     drive = build_drive(conn, build_retina(conn), max_hz=100.0, lamina_mv=0.06)
     groups = readout_groups(conn)
     readout = Readout(groups, np.zeros(6, np.float32), std_floor(groups))
-    agent = build_agent(conn, drive, readout, BrainParams(), ablation=ablation)
+    agent = build_agent(conn, drive, readout, BrainParams(),
+                        wiring="shuffled" if ablation == "shuffled" else "full")
     env = make_env(2)
     logs = rollout(agent, env, jax.random.PRNGKey(0), n_actions=3, batch=2, ablation=ablation, policy=policy, keep_frames=True)
     assert logs["action"].shape == (3, 2) and logs["z"].shape == (3, 2, 6) and logs["sig"].shape == (3, 2, 6)

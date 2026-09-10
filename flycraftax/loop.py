@@ -32,14 +32,13 @@ class Agent:
     wiring: str = "full"
 
 
-def build_agent(conn, drive, readout, p=BrainParams(), wiring="full", seed=0, ablation=None):
+def build_agent(conn, drive, readout, p=BrainParams(), wiring="full", seed=0):
     """`shuffled` permutes the edge targets, keeping the in-degree distribution.
 
-    `ablation=` is accepted as an alias for callers that label a whole condition: only `shuffled`
-    changes the wiring, so every other ablation builds the `full` agent and is applied in `rollout`.
+    Wiring is the only build-time ablation: every other ablation builds the `full` agent and is
+    applied in `rollout`, so a caller holding a condition name passes
+    `wiring="shuffled" if ablation == "shuffled" else "full"`.
     """
-    if ablation is not None:
-        wiring = "shuffled" if ablation == "shuffled" else "full"
     assert wiring in WIRINGS, f"unknown wiring {wiring!r}"
     post = np.random.default_rng(seed).permutation(conn.post) if wiring == "shuffled" else conn.post
     W = build_weights(conn.n, conn.pre, post, conn.signed_count(), p)
@@ -67,14 +66,19 @@ def init_carry(agent, env, key, batch):
 
 
 def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, greedy=False, obs0=None,
-              keep_counts=False):
+              keep_counts=False, keep_feats=None):
     """The scan body: step((obs, env_state, brain, params), key) -> (carry, log).
 
     `params` is None for readout and random, and a dict with W, b, vw, vb for linear; it rides in
     the carry untouched so PPO can scan the same step with fresh parameters each update. Only
     `shuffled` lives in the agent's wiring; the other ablations are applied here.
+
+    `keep_feats` logs `feats` (B, 1314), `logp` and `value`; it defaults to the linear policy, the
+    only consumer, because a 2,000-action rollout of them is ~100 MB of device memory nothing reads.
     """
     assert ablation in ABLATIONS and policy in POLICIES
+    if keep_feats is None:
+        keep_feats = policy == "linear"
     assert (ablation == "shuffled") == (agent.wiring == "shuffled"), \
         f"ablation {ablation!r} against a {agent.wiring!r} agent would mislabel the run"
     if ablation == "static" and obs0 is None:
@@ -108,9 +112,11 @@ def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, 
             action=action, reward=reward, done=done, sig=signals(agent.readout.groups, rates), z=z,
             active=(brain.counts > 0).mean(axis=1), lamina=rates[:, l1].mean(axis=1), achievements=st.achievements,
             health=st.player_health, food=st.player_food, drink=st.player_drink, energy=st.player_energy,
-            feats=feats, logp=logp, value=value, ep_return=info["returned_episode_returns"],
-            ep_len=info["returned_episode_lengths"], ep_done=info["returned_episode"],
+            ep_return=info["returned_episode_returns"], ep_len=info["returned_episode_lengths"],
+            ep_done=info["returned_episode"],
         )
+        if keep_feats:
+            log.update(feats=feats, logp=logp, value=value)
         if keep_frames:
             log["frame"] = obs[0]        # the frame that drove this action, env 0 only
         if keep_counts:
@@ -122,7 +128,7 @@ def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, 
 
 
 def rollout(agent, env, key, n_actions, batch, ablation="full", policy="readout", keep_frames=False,
-            params=None, greedy=False):
+            params=None, greedy=False, keep_feats=None):
     """One scan over actions; the env must have been built with num_envs == batch.
 
     `shuffled` is the one ablation that has to match the agent (it is built into the wiring);
@@ -130,7 +136,7 @@ def rollout(agent, env, key, n_actions, batch, ablation="full", policy="readout"
     """
     key, k0 = jax.random.split(key)
     carry = init_carry(agent, env, k0, batch) + (params,)
-    step = make_step(agent, env, ablation, policy, keep_frames, greedy, obs0=carry[0])
+    step = make_step(agent, env, ablation, policy, keep_frames, greedy, obs0=carry[0], keep_feats=keep_feats)
     _, logs = jax.lax.scan(step, carry, jax.random.split(key, n_actions))
     return logs
 

@@ -29,4 +29,10 @@ calibrate:
 eval:
 	$(RUN) scripts/eval_zero_shot.py
 
-.PHONY: env setup data test test-slow bench mn9 calibrate eval
+train:
+	$(RUN) scripts/train_ppo.py
+
+viewer:
+	$(RUN) scripts/make_viewer.py
+
+.PHONY: env setup data test test-slow bench mn9 calibrate eval train viewer

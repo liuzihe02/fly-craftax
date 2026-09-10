@@ -21,6 +21,13 @@ from flycraftax.retina import build_retina
 
 
 def main(cfg=PPOConfig(), out=Path("outputs")):
+    out.mkdir(parents=True, exist_ok=True)
+    baseline = out / "zero_shot.json"      # read first: an hour of training then a missing file is the worst order
+    if not baseline.exists():
+        raise SystemExit(f"{baseline} not found: run `make eval` first, it writes the M3 baselines "
+                         "this run is scored against")
+    with open(baseline) as f:
+        base = json.load(f)["results"]
     conn = load_connectome()
     readout, norm = load_readout(conn)
     drive = build_drive(conn, build_retina(conn), norm["max_hz"], lamina_mv=norm["lamina_mv"])
@@ -33,19 +40,19 @@ def main(cfg=PPOConfig(), out=Path("outputs")):
     print(f"trained {cfg.n_updates} updates in {(time.time() - t0) / 60:.1f} min; "
           f"first-10 mean episode return {np.mean(metrics['ep_return'][:10]):.3f}, length {np.mean(metrics['ep_len'][:10]):.0f}; "
           f"last-10 mean episode return {np.mean(metrics['ep_return'][-10:]):.3f}, length {np.mean(metrics['ep_len'][-10:]):.0f}", flush=True)
-    out.mkdir(exist_ok=True)
     np.savez(out / "ppo_params.npz", **{k: np.asarray(v) for k, v in params.items()})
-    json.dump(dict(config=cfg._asdict(), metrics=metrics), open(out / "ppo_metrics.json", "w"), indent=1)
+    with open(out / "ppo_metrics.json", "w") as f:
+        json.dump(dict(config=cfg._asdict(), metrics=metrics), f, indent=1)
 
     env8 = make_env(8)
     logs = rollout(agent, env8, jax.random.PRNGKey(0), 2000, 8, policy="linear", params=params, greedy=True)
     result = summarise(logs, 2000)
-    base = json.load(open(out / "zero_shot.json"))["results"]
     table = {"ppo/greedy": result, "full/readout": base["full/readout"], "full/random": base["full/random"]}
     for name, r in table.items():
         print(f"{name:14s} survival {np.mean(r['survival']):7.1f}  achievements {sum(r['achievements'])}  actions "
               + " ".join(f"{a[:2]}={h:.2f}" for a, h in zip(ACTIONS, r["action_hist"])), flush=True)
-    json.dump(table, open(out / "ppo_eval.json", "w"), indent=1)
+    with open(out / "ppo_eval.json", "w") as f:
+        json.dump(table, f, indent=1)
 
     fig, ax = plt.subplots(1, 3, figsize=(16, 4))
     ax[0].plot(metrics["ep_return"]); ax[0].set_title("episode return per update"); ax[0].set_xlabel("update")

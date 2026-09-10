@@ -31,6 +31,7 @@ class PPOConfig(NamedTuple):
     n_epochs: int = 4
     n_minibatches: int = 4
     max_grad_norm: float = 0.5
+    verbose: bool = True
 
 
 def gae(rewards, values, dones, last_value, gamma, lam):
@@ -65,12 +66,14 @@ def make_train(agent, env, cfg):
     step = make_step(agent, env, policy="linear")
     tx = optax.chain(optax.clip_by_global_norm(cfg.max_grad_norm), optax.adam(cfg.lr))
     n_batch = cfg.n_envs * cfg.n_steps
+    assert n_batch % cfg.n_minibatches == 0, \
+        f"n_envs * n_steps = {n_batch} is not divisible by n_minibatches {cfg.n_minibatches}"
     mb = n_batch // cfg.n_minibatches
 
     def update(runner, x):
         carry, opt_state = runner
         key, i = x
-        key, k_roll, k_boot, k_shuf = jax.random.split(key, 4)
+        k_roll, k_boot, k_shuf = jax.random.split(key, 3)
         carry, logs = jax.lax.scan(step, carry, jax.random.split(k_roll, cfg.n_steps))
         obs, env_state, brain, params = carry
         # the features after the last step are not in the logs: one more brain window on the final
@@ -89,7 +92,7 @@ def make_train(agent, env, cfg):
             def minibatch(state, i):
                 params, opt_state = state
                 idx = jax.lax.dynamic_slice_in_dim(perm, i * mb, mb)
-                batch = {k: v[idx] for k, v in flat.items()}
+                batch = {name: v[idx] for name, v in flat.items()}
                 (l, aux), grads = jax.value_and_grad(loss, has_aux=True)(params, batch, cfg.clip_eps, cfg.ent_coef, cfg.vf_coef)
                 updates, opt_state = tx.update(grads, opt_state, params)
                 return (optax.apply_updates(params, updates), opt_state), (l, aux["entropy"])
@@ -104,8 +107,9 @@ def make_train(agent, env, cfg):
             n_episodes=done.sum(), entropy=ents.mean(), loss=losses.mean(),
             action_hist=jnp.zeros(len(ACTIONS)).at[logs["action"].reshape(-1)].add(1.0) / n_batch,
         )
-        jax.debug.print("update {i} ep_return {r} ep_len {l} n_episodes {n} entropy {e}", i=i,
-                        r=metrics["ep_return"], l=metrics["ep_len"], n=metrics["n_episodes"], e=metrics["entropy"])
+        if cfg.verbose:      # a Python-level branch: the print is not traced when it is off
+            jax.debug.print("update {i} ep_return {r} ep_len {l} n_episodes {n} entropy {e}", i=i,
+                            r=metrics["ep_return"], l=metrics["ep_len"], n=metrics["n_episodes"], e=metrics["entropy"])
         return ((obs, env_state, brain, params), opt_state), metrics
 
     def train(key):

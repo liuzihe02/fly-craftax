@@ -11,3 +11,5 @@ On a pod without conda, pass the interpreter: `make test RUN=python3`.
 - `make mn9` -- MN9 sugar-response check against Shiu et al.
 - `make calibrate` -- sweep lamina bias and synapse weight, write `flycraftax/readout_norm.json`.
 - `make eval` -- zero-shot rollout against the ablation controls, into `outputs/`.
+- `make train` -- PPO on the linear DN readout, then a greedy evaluation against the M3 baselines (needs `make eval` first).
+- `make viewer` -- render the scrubbable brain viewer: `outputs/viewer/index.html` and `outputs/viewer.gif`.
