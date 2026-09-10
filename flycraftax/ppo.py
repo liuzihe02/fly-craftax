@@ -67,8 +67,9 @@ def make_train(agent, env, cfg):
     n_batch = cfg.n_envs * cfg.n_steps
     mb = n_batch // cfg.n_minibatches
 
-    def update(runner, key):
+    def update(runner, x):
         carry, opt_state = runner
+        key, i = x
         key, k_roll, k_boot, k_shuf = jax.random.split(key, 4)
         carry, logs = jax.lax.scan(step, carry, jax.random.split(k_roll, cfg.n_steps))
         obs, env_state, brain, params = carry
@@ -103,6 +104,8 @@ def make_train(agent, env, cfg):
             n_episodes=done.sum(), entropy=ents.mean(), loss=losses.mean(),
             action_hist=jnp.zeros(len(ACTIONS)).at[logs["action"].reshape(-1)].add(1.0) / n_batch,
         )
+        jax.debug.print("update {i} ep_return {r} ep_len {l} n_episodes {n} entropy {e}", i=i,
+                        r=metrics["ep_return"], l=metrics["ep_len"], n=metrics["n_episodes"], e=metrics["entropy"])
         return ((obs, env_state, brain, params), opt_state), metrics
 
     def train(key):
@@ -110,7 +113,8 @@ def make_train(agent, env, cfg):
         params = init_params(len(agent.dn_idx))
         carry = init_carry(agent, env, k0, cfg.n_envs) + (params,)
         runner = (carry, tx.init(params))
-        (carry, _), metrics = jax.lax.scan(update, runner, jax.random.split(key, cfg.n_updates))
+        xs = (jax.random.split(key, cfg.n_updates), jnp.arange(cfg.n_updates))
+        (carry, _), metrics = jax.lax.scan(update, runner, xs)
         return carry[3], metrics
 
     return jax.jit(train)
