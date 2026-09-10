@@ -90,7 +90,7 @@ All are panels
   - [x] tonic bias in the kernel, lamina resting drive
   - [x] DN readout: six signals, z-score floor
   - [x] closed-loop rollout as one scan with ablations and policies
-  - [ ] calibration sweep over lamina bias and synapse weight
+  - [x] calibration sweep over lamina bias and synapse weight
     - pick 0.275/0.04, qualified (5 non-zero signals, active 0.053, black L1 above real L1); `w/mv: nonzero, active, L1 full/black` — 0.275/0.04: 5, 0.053, 17.7/23.8; 0.275/0.06: 5, 0.083, 45.3/52.9; 0.275/0.10: 6, 0.115, 91.4/97.8; 0.44/0.04: 4, 0.078, 15.9/22.9; 0.44/0.06: 4, 0.108, 42.0/52.0; 0.44/0.10: 4, 0.139, 86.3/96.4. Black beats real everywhere, so light does reduce lamina firing; no runaway (max active 0.139); DNp09 (`forward`) silent at every config but 0.275/0.10; every DN std sits at or under its floor, so the floor sets the gain. Awaiting controller ratification
   - [ ] zero-shot evaluation against black, static, disconnected, shuffled, random
 - [ ] M4 PPO linear readout
