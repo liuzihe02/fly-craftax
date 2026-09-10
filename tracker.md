@@ -70,7 +70,8 @@ All are panels
   - [x] Brian2 oracle
   - [x] JAX LIF kernel, spike-for-spike match on toy graphs
   - [x] oracle match on a 2000-neuron MaleCNS subgraph
-  - [ ] full-brain throughput benchmark on the 4060
+  - [x] full-brain throughput benchmark on the 4090
+    - 4090: 3,817 steps/s at batch 1 (0.38x realtime per env); batch 32 gives 152 steps/s and 4,851 env-steps/s, 0.98 GiB peak. Delay buffer as a ring beat the concatenate by 7% (batch 1) to 22% (batch 32) and is kept; BCSR, segment_sum, a transposed buffer and a driven-subset RNG were all equal or slower.
   - [ ] MN9 smoke check with labellar GRN drive
 - [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
   - [ ] craftax installed and pinned, baseline wrappers copied, one env step

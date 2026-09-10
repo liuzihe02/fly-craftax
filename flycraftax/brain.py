@@ -38,8 +38,9 @@ class BrainState(NamedTuple):
     v: jax.Array        # (B, N) membrane potential, mV
     g: jax.Array        # (B, N) synaptic drive, mV
     refrac: jax.Array   # (B, N) int32, steps of refractoriness remaining
-    buf: jax.Array      # (n_dly, B, N) float32, buf[0] is the oldest spike vector
+    buf: jax.Array      # (n_dly, B, N) float32 ring of spike vectors
     counts: jax.Array   # (B, N) float32, spikes since the last reset_counts
+    t: jax.Array        # int32 scalar, steps run; slot t % n_dly is the oldest, then reused
 
 
 def build_weights(n, pre, post, signed_count, p):
@@ -57,7 +58,7 @@ def init_state(n, batch, p):
     return BrainState(
         v=jnp.full((batch, n), p.v_rest, jnp.float32),
         g=z, refrac=jnp.zeros((batch, n), jnp.int32),
-        buf=jnp.zeros((p.n_dly, batch, n), jnp.float32), counts=z,
+        buf=jnp.zeros((p.n_dly, batch, n), jnp.float32), counts=z, t=jnp.int32(0),
     )
 
 
@@ -88,7 +89,8 @@ def step(W, rfc, p, state, kick_prob, silence, key):
     v = jnp.where(active, p.v_rest + b * (state.v - p.v_rest) + c * state.g, state.v)
     g = jnp.where(active, a * state.g, state.g)
     spikes = active & (v > p.v_th)                        # Brian2: (v > v_th) and not_refractory
-    delayed = state.buf[0] * silence                      # (B, N), spikes from n_dly steps ago
+    slot = state.t % p.n_dly                              # ring: read the oldest slot, then reuse it
+    delayed = jax.lax.dynamic_index_in_dim(state.buf, slot, 0, False) * silence   # (B, N)
     syn_in = (W @ delayed.T).T                            # (N, N) @ (N, B) -> (B, N)
     kicked = p.kick * jax.random.bernoulli(key, kick_prob)
     g = g + jnp.where(active, syn_in, 0.0)                # dropped while refractory
@@ -97,8 +99,8 @@ def step(W, rfc, p, state, kick_prob, silence, key):
     g = jnp.where(spikes, 0.0, g)
     refrac = jnp.where(spikes, rfc[None, :], refrac)
     sp = spikes.astype(jnp.float32)
-    buf = jnp.concatenate([state.buf[1:], sp[None]], axis=0)
-    return BrainState(v, g, refrac, buf, state.counts + sp), spikes
+    buf = jax.lax.dynamic_update_index_in_dim(state.buf, sp, slot, 0)
+    return BrainState(v, g, refrac, buf, state.counts + sp, state.t + 1), spikes
 
 
 def run_window(W, rfc, p, state, kick_prob, silence, key, n_steps):
