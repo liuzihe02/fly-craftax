@@ -89,7 +89,7 @@ All are panels
 - [ ] M3 zero-shot loop with ablation controls, plan: `docs/plans/2026-09-10-m3-zero-shot.md`
   - [x] tonic bias in the kernel, lamina resting drive
   - [x] DN readout: six signals, z-score floor
-  - [ ] closed-loop rollout as one scan with ablations and policies
+  - [x] closed-loop rollout as one scan with ablations and policies
   - [ ] calibration sweep over lamina bias and synapse weight
   - [ ] zero-shot evaluation against black, static, disconnected, shuffled, random
 - [ ] M4 PPO linear readout
