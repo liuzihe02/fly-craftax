@@ -78,7 +78,7 @@ All are panels
 - [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
   - [x] craftax installed and pinned, baseline wrappers copied, one env step
   - [x] egocentric action wrapper
-  - [ ] survival reward wrapper and batched env stack
+  - [x] survival reward wrapper and batched env stack
   - [ ] photoreceptor retinotopy from lamina and medulla synapses
   - [ ] radial retina sampler rotated by facing, visual check
   - [ ] drive assembly: retina plus hunger, thirst, fatigue
