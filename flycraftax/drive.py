@@ -23,6 +23,7 @@ class Drive:
     groups: tuple  # (npf_idx, hyg_idx, er5_idx) int32 arrays, driven by food, drink, energy
     max_hz: float
     bias: np.ndarray  # float32 (N,) mV per step of tonic input; non-zero on the lamina only
+    lamina_l1: np.ndarray  # int32 (M,) L1 cells, the lamina rate probe for calibration
 
 
 def build_drive(conn: Connectome, retina: Retina, max_hz: float = 100.0, lamina_mv: float = 0.0) -> Drive:
@@ -30,7 +31,8 @@ def build_drive(conn: Connectome, retina: Retina, max_hz: float = 100.0, lamina_
     idx = np.concatenate([retina.idx, *groups]).astype(np.int32)
     bias = np.zeros(conn.n, np.float32)
     bias[conn.index(types=list(LAMINA))] = lamina_mv
-    return Drive(retina=retina, idx=idx, n_retina=len(retina.idx), groups=groups, max_hz=max_hz, bias=bias)
+    return Drive(retina=retina, idx=idx, n_retina=len(retina.idx), groups=groups, max_hz=max_hz, bias=bias,
+                 lamina_l1=conn.index(types=["L1"]))
 
 
 def drive_rates(drive: Drive, obs, env_state) -> jax.Array:

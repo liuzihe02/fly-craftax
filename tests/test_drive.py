@@ -21,7 +21,7 @@ def _toy_drive():
     groups = (np.array([20], np.int32), np.array([30, 31], np.int32), np.array([40], np.int32))
     idx = np.concatenate([retina.idx, *groups])
     return Drive(retina=retina, idx=idx, n_retina=2, groups=groups, max_hz=100.0,
-                 bias=np.zeros(50, np.float32))
+                 bias=np.zeros(50, np.float32), lamina_l1=np.array([12], np.int32))
 
 
 def test_rates_layout_and_deficits():
