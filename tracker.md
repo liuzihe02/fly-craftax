@@ -102,7 +102,7 @@ All are panels
   - [x] PPO training function, fully jitted
   - [ ] train, greedy evaluation against the M3 baselines
 - [ ] M5 viewer, plan: `docs/plans/2026-09-10-m5-viewer.md`
-  - [ ] fly sprites in the renderer, soma map, panel composition
+  - [x] fly sprites in the renderer, soma map, panel composition
   - [ ] viewer script: frames, slider page, GIF
 
 ## Known Limitations
