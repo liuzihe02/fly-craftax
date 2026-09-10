@@ -73,7 +73,7 @@ All are panels
   - [x] full-brain throughput benchmark on the 4090
     - 4090: 3,817 brain steps/s at batch 1, 152 steps/s at batch 32, under 1 GB. Sparse matvec is 90% of the step and gather-bound, so batching scales poorly
   - [x] MN9 smoke check with labellar GRN drive
-    - 165 labellar GRNs at 100 Hz for 500 ms: MN9_L fires 2-14 Hz over seeds, MN9_R never (net-inhibitory in-edges), ~9.5k active neurons vs Shiu's 404. Rate does not rise with drive and drops above 100 Hz
+    - 165 labellar GRNs at 100 Hz for 500 ms: MN9_L fires 2-10 Hz over seeds, MN9_R never (net-inhibitory in-edges), ~9.5k active neurons vs Shiu's 404. Rate does not rise with drive and drops above 100 Hz
     - threshold 2 fires MN9 less, so default 5 stays. Rate calibration is M3 work; full tables in `docs/plans/2026-09-09-m1-brain.md` results section
 - [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
   - [ ] craftax installed and pinned, baseline wrappers copied, one env step
