@@ -85,7 +85,11 @@ All are panels
   - [x] drive assembly: retina plus hunger, thirst, fatigue
   - [x] integration rollout through env, drive, brain, visual check
     - 40 actions x 200 steps at batch 4: mean Hz DNp09 0.00, MDN 0.00, DNa02_L 1.25, DNa02_R 0.00, MN9 1.25, FB6/7 0.90; 10,953 distinct neurons spiked (env 0), DN groups near-silent and only FB6/7 sustains activity
-- [ ] M3 zero-shot loop with ablation controls
+- [ ] M3 zero-shot loop with ablation controls, plan: `docs/plans/2026-09-10-m3-zero-shot.md`
+  - [ ] DN readout: six signals, z-score floor
+  - [ ] closed-loop rollout as one scan with ablations and policies
+  - [ ] calibration sweep over drive gain and synapse weight
+  - [ ] zero-shot evaluation against black, disconnected, shuffled, random
 - [ ] M4 PPO linear readout
 - [ ] M5 viewer
 
