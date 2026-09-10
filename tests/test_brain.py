@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 from flycraftax.brain import (
-    BrainParams, build_weights, init_state, rate_for_hz, rate_hz, rfc_steps, run_window, step,
+    BrainParams, build_weights, init_state, rate_for_hz, rate_hz, reset_envs, rfc_steps,
+    run_window, step,
 )
 from flycraftax.oracle import run_brian2
 
@@ -88,18 +89,44 @@ def test_run_window_counts_and_poisson_rate():
     W = build_weights(n, np.array([], int), np.array([], int), np.array([], np.float32), p)
     rfc = rfc_steps(n, np.array([0]), p)
     state = init_state(n, 4, p)
-    kick_prob = jnp.full((4, n), hz * p.dt_ms / 1000.0)
+    kick_prob = jnp.full((4, n), rate_for_hz(hz, p))
     state = run_window(W, rfc, p, state, kick_prob, jnp.ones(n), jax.random.PRNGKey(0), n_steps)
     r = np.asarray(rate_hz(state.counts, n_steps, p))
     assert r.shape == (4, n)
     assert 85 < r.mean() < 115
 
 
+def test_reset_envs_only_touches_done_envs():
+    """Per-episode reset: env 0 comes back to rest, env 1 and the step counter are untouched."""
+    p = BrainParams()
+    n, n_steps = 3, 50
+    empty = np.array([], int)
+    W = build_weights(n, empty, empty, np.array([], np.float32), p)
+    rfc = rfc_steps(n, np.array([0, 1, 2]), p)  # driven, so spikes are not held off
+    state = init_state(n, 2, p)
+    state = run_window(W, rfc, p, state, jnp.ones((2, n)), jnp.ones(n),
+                       jax.random.PRNGKey(0), n_steps)
+    assert float(state.counts.sum()) > 0 and float(state.buf.sum()) > 0
+
+    before = jax.tree.map(np.asarray, state)
+    after = reset_envs(state, jnp.array([True, False]), p)
+
+    assert np.array_equal(np.asarray(after.v)[0], np.full(n, p.v_rest, np.float32))
+    assert not np.any(np.asarray(after.g)[0])
+    assert not np.any(np.asarray(after.counts)[0])
+    assert not np.any(np.asarray(after.refrac)[0])
+    assert float(np.asarray(after.buf)[:, 0].sum()) == 0.0
+
+    for field in ("v", "g", "refrac", "counts"):
+        assert np.array_equal(np.asarray(getattr(after, field))[1], getattr(before, field)[1])
+    assert np.array_equal(np.asarray(after.buf)[:, 1], before.buf[:, 1])
+    assert int(after.t) == int(before.t) == n_steps
+
+
 @pytest.mark.slow
-def test_matches_oracle_on_malecns_subgraph():
+def test_matches_oracle_on_malecns_subgraph(conn):
     """~2000 real neurons downstream of the labellar GRNs, driven at 100 Hz for 200 ms."""
-    from flycraftax.data import load_connectome, subgraph
-    conn = load_connectome()
+    from flycraftax.data import subgraph
     seeds = conn.index(type_prefix="LB")
     nodes, pre, post, sc = subgraph(conn, seeds, hops=2, max_n=2000)
     p = BrainParams()
@@ -120,10 +147,8 @@ def test_matches_oracle_on_malecns_subgraph():
 
 
 @pytest.mark.slow
-def test_mn9_responds_to_labellar_drive():
+def test_mn9_responds_to_labellar_drive(conn):
     """Labellar GRNs at 100 Hz for 500 ms make MN9 fire; silent input makes it silent."""
-    from flycraftax.data import load_connectome
-    conn = load_connectome()
     p = BrainParams()
     W = build_weights(conn.n, conn.pre, conn.post, conn.signed_count(), p)
     lb, mn9 = conn.index(type_prefix="LB"), conn.index(types=["MN9"])

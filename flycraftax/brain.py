@@ -6,6 +6,8 @@ import jax
 import jax.numpy as jnp
 from jax.experimental import sparse
 
+STEPS_PER_ACTION = 200  # 20 ms of brain time per env action, fixed after the M1 benchmark
+
 
 class BrainParams(NamedTuple):
     dt_ms: float = 0.1
@@ -44,12 +46,21 @@ class BrainState(NamedTuple):
 
 
 def build_weights(n, pre, post, signed_count, p):
+    # JAX drops out-of-range scatter indices silently, so an off-by-one in the loader
+    # would build a wrong graph instead of failing: check on numpy, before the tracer.
+    assert len(pre) == 0 or (pre.min() >= 0 and pre.max() < n), "pre index out of range"
+    assert len(post) == 0 or (post.min() >= 0 and post.max() < n), "post index out of range"
     idx = jnp.stack([jnp.asarray(post, jnp.int32), jnp.asarray(pre, jnp.int32)], axis=1)
     vals = jnp.asarray(signed_count, jnp.float32) * p.w_syn
     return sparse.BCOO((vals, idx), shape=(n, n)).sort_indices()
 
 
 def rfc_steps(n, driven_idx, p):
+    # Out-of-range indices are dropped silently by .at[].set, which would leave the
+    # "driven" neurons refractory and the whole brain silent.
+    assert len(driven_idx) == 0 or (
+        driven_idx.min() >= 0 and driven_idx.max() < n
+    ), "driven_idx out of range"
     return jnp.full(n, p.n_rfc, jnp.int32).at[jnp.asarray(driven_idx, jnp.int32)].set(0)
 
 
@@ -118,6 +129,16 @@ def rate_hz(counts, n_steps, p):
 
 def reset_counts(state):
     return state._replace(counts=jnp.zeros_like(state.counts))
+
+
+def reset_envs(state, done, p):
+    """Reset the brain of every env where done is True; other envs and the step counter are untouched."""
+    d = done[:, None]                       # (B, 1) against the (B, N) fields
+    return state._replace(
+        v=jnp.where(d, p.v_rest, state.v), g=jnp.where(d, 0.0, state.g),
+        refrac=jnp.where(d, 0, state.refrac), buf=jnp.where(d[None], 0.0, state.buf),
+        counts=jnp.where(d, 0.0, state.counts),
+    )
 
 
 step = jax.jit(step, static_argnames=("p",))

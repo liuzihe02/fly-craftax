@@ -4,7 +4,9 @@ import time
 import jax
 import jax.numpy as jnp
 
-from flycraftax.brain import BrainParams, build_weights, init_state, rate_for_hz, rfc_steps, run_window
+from flycraftax.brain import (
+    BrainParams, build_weights, init_state, rate_for_hz, reset_counts, rfc_steps, run_window,
+)
 from flycraftax.data import load_connectome
 
 
@@ -23,6 +25,7 @@ def main():
         key = jax.random.PRNGKey(0)
         state = run_window(W, rfc, p, state, kick_prob, silence, key, n_steps)  # compile
         state.v.block_until_ready()
+        state = reset_counts(state)  # so "active neurons/env" describes the timed windows only
         t0 = time.perf_counter()
         for _ in range(5):
             state = run_window(W, rfc, p, state, kick_prob, silence, key, n_steps)
@@ -31,9 +34,10 @@ def main():
         active = int((state.counts > 0).sum(axis=1).mean())
         print(f"batch={batch:3d}  {n_steps/dt:8.0f} steps/s  {n_steps*p.dt_ms/1000/dt:6.3f}x realtime per env  "
               f"{batch*n_steps/dt:8.0f} env-steps/s  active neurons/env={active}")
-    mem = jax.local_devices()[0].memory_stats()
-    print(f"GPU bytes_in_use={mem['bytes_in_use']/2**30:.2f} GiB  "
-          f"peak_bytes_in_use={mem['peak_bytes_in_use']/2**30:.2f} GiB")
+    mem = jax.devices()[0].memory_stats()  # None on backends that do not report it
+    if isinstance(mem, dict):
+        print(f"GPU bytes_in_use={mem['bytes_in_use']/2**30:.2f} GiB  "
+              f"peak_bytes_in_use={mem['peak_bytes_in_use']/2**30:.2f} GiB")
 
 
 if __name__ == "__main__":

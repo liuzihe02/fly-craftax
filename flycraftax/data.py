@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import pyarrow.feather as feather
 
+_CACHE_VERSION = 1  # bump when the loader's output changes
+
 SIGN = {
     "acetylcholine": 1.0,
     "gaba": -1.0,
@@ -73,9 +75,10 @@ def _edges(data_dir: Path, body_id: np.ndarray, threshold: int) -> tuple[np.ndar
     e = e[e.weight >= threshold]
     pre = np.searchsorted(body_id, e.body_pre.values)
     post = np.searchsorted(body_id, e.body_post.values)
-    ok = (pre < len(body_id)) & (post < len(body_id))
-    ok &= body_id[np.minimum(pre, len(body_id) - 1)] == e.body_pre.values
-    ok &= body_id[np.minimum(post, len(body_id) - 1)] == e.body_post.values
+    # searchsorted can land at len(body_id); the clamped equality checks reject those too.
+    ok = (body_id[np.minimum(pre, len(body_id) - 1)] == e.body_pre.values) & (
+        body_id[np.minimum(post, len(body_id) - 1)] == e.body_post.values
+    )
     return (
         pre[ok].astype(np.int32),
         post[ok].astype(np.int32),
@@ -84,7 +87,7 @@ def _edges(data_dir: Path, body_id: np.ndarray, threshold: int) -> tuple[np.ndar
 
 
 def load_connectome(threshold: int = 5, data_dir: Path = Path("data")) -> Connectome:
-    cache = data_dir / f"connectome_t{threshold}.npz"
+    cache = data_dir / f"connectome_v{_CACHE_VERSION}_t{threshold}.npz"
     if cache.exists():
         z = np.load(cache, allow_pickle=True)
         return Connectome(**{k: z[k] for k in z.files})

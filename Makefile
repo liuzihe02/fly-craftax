@@ -20,4 +20,7 @@ test-slow:
 bench:
 	$(RUN) scripts/bench_brain.py
 
-.PHONY: env setup data test test-slow bench
+mn9:
+	$(RUN) scripts/mn9_check.py
+
+.PHONY: env setup data test test-slow bench mn9

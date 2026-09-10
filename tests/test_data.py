@@ -1,12 +1,7 @@
 import numpy as np
 import pytest
 
-from flycraftax.data import Connectome, load_connectome
-
-
-@pytest.fixture(scope="session")
-def conn():
-    return load_connectome(threshold=5)
+from flycraftax.data import Connectome
 
 
 @pytest.mark.slow
