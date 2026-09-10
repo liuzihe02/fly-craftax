@@ -75,7 +75,7 @@ All are panels
   - [x] MN9 smoke check with labellar GRN drive
     - 165 labellar GRNs at 100 Hz for 500 ms: MN9_L fires 2-10 Hz over seeds, MN9_R never (net-inhibitory in-edges), ~9.5k active neurons vs Shiu's 404. Rate does not rise with drive and drops above 100 Hz
     - threshold 2 fires MN9 less, so default 5 stays. Rate calibration is M3 work; full tables in `docs/plans/2026-09-09-m1-brain.md` results section
-- [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
+- [x] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
   - [x] craftax installed and pinned, baseline wrappers copied, one env step
   - [x] egocentric action wrapper
   - [x] survival reward wrapper and batched env stack
@@ -83,7 +83,8 @@ All are panels
     - 2,182 photoreceptors mapped onto 491 left and 585 right columns; 1,983 outer photoreceptors are untraced fragments absent from the traced-only edge file, so left-eye luminance covers only the outer half of elevations. The full 1.1 GB edge file would recover them (follow-up decision)
   - [x] radial retina sampler rotated by facing, visual check
   - [x] drive assembly: retina plus hunger, thirst, fatigue
-  - [ ] integration rollout through env, drive, brain, visual check
+  - [x] integration rollout through env, drive, brain, visual check
+    - 40 actions x 200 steps at batch 4: mean Hz DNp09 0.00, MDN 0.00, DNa02_L 1.25, DNa02_R 0.00, MN9 1.25, FB6/7 0.90; 10,953 distinct neurons spiked (env 0), DN groups near-silent and only FB6/7 sustains activity
 - [ ] M3 zero-shot loop with ablation controls
 - [ ] M4 PPO linear readout
 - [ ] M5 viewer

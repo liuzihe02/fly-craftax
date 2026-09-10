@@ -39,5 +39,6 @@ def drive_rates(drive: Drive, obs, env_state) -> jax.Array:
 
 def kick_prob(drive: Drive, rates, n: int, p: BrainParams) -> jax.Array:
     """(B, n) per-step Bernoulli probabilities, zero everywhere but the driven cells."""
+    assert drive.idx.max() < n, "drive.idx out of range"  # JAX drops out-of-range scatters silently
     prob = rates * rate_for_hz(drive.max_hz, p)
     return jnp.zeros((rates.shape[0], n), jnp.float32).at[:, drive.idx].set(prob)
