@@ -14,7 +14,7 @@ from flycraftax.data import Connectome
 _CACHE_VERSION = 1  # bump when build_retina's output changes
 
 CHANNEL = {"R1-R6": 0, "R8p": 1, "R8y": 2}
-LAMINA = ("L1", "L2", "L3")
+R16_TARGETS = ("L1", "L2", "L3")  # the lamina monopolars R1-R6 vote on for their column
 
 
 @dataclass
@@ -49,13 +49,13 @@ def build_retina(conn: Connectome, data_dir: Path = Path("data")) -> Retina:
 
     xy = _hex_xy(data_dir, conn.body_id)
     has_col = ~np.isnan(xy[:, 0])
-    is_lamina = np.isin(conn.type, LAMINA)
+    is_target = np.isin(conn.type, R16_TARGETS)
     rows = []
     for tname, ch in CHANNEL.items():
         cells = conn.index(types=[tname])
         e = np.isin(conn.pre, cells) & has_col[conn.post]
         if tname == "R1-R6":
-            e &= is_lamina[conn.post]
+            e &= is_target[conn.post]
         df = pd.DataFrame(
             {"pre": conn.pre[e], "x": xy[conn.post[e], 0], "y": xy[conn.post[e], 1], "w": conn.count[e]}
         )

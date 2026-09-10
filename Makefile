@@ -23,4 +23,10 @@ bench:
 mn9:
 	$(RUN) scripts/mn9_check.py
 
-.PHONY: env setup data test test-slow bench mn9
+calibrate:
+	$(RUN) scripts/calibrate.py
+
+eval:
+	$(RUN) scripts/eval_zero_shot.py
+
+.PHONY: env setup data test test-slow bench mn9 calibrate eval

@@ -192,4 +192,5 @@ def test_bias_none_matches_zero_bias():
     kick = jnp.zeros((1, n)).at[0, 0].set(rate_for_hz(50.0, p))
     a = run_window(W, rfc, p, init_state(n, 1, p), kick, jnp.ones(n), jax.random.PRNGKey(1), 500)
     b = run_window(W, rfc, p, init_state(n, 1, p), kick, jnp.ones(n), jax.random.PRNGKey(1), 500, bias=jnp.zeros(n))
+    assert float(a.counts.sum()) > 0        # a silent brain would make the comparison vacuous
     assert np.array_equal(np.asarray(a.counts), np.asarray(b.counts))

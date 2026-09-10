@@ -27,18 +27,27 @@ class Agent:
     readout: Readout
     n: int
     n_steps: int = STEPS_PER_ACTION
+    ablation: str = "full"
 
 
 def build_agent(conn, drive, readout, p=BrainParams(), ablation="full", seed=0):
     """`shuffled` permutes the edge targets, keeping the in-degree distribution."""
     post = np.random.default_rng(seed).permutation(conn.post) if ablation == "shuffled" else conn.post
     W = build_weights(conn.n, conn.pre, post, conn.signed_count(), p)
-    return Agent(W, rfc_steps(conn.n, drive.idx, p), p, drive, readout, conn.n)
+    return Agent(W, rfc_steps(conn.n, drive.idx, p), p, drive, readout, conn.n, ablation=ablation)
 
 
-def rollout(agent, env, key, n_actions, batch, ablation="full", policy="readout", keep_frames=False):
-    """One scan over actions; the env must have been built with num_envs == batch."""
+def rollout(agent, env, key, n_actions, batch, ablation=None, policy="readout", keep_frames=False):
+    """One scan over actions; the env must have been built with num_envs == batch.
+
+    `ablation` defaults to the one the agent was built with -- `shuffled` and `disconnected`
+    only differ in `build_agent`, so passing a mismatched one here would silently mislabel a run.
+    """
+    if ablation is None:
+        ablation = agent.ablation
+    assert ablation == agent.ablation, f"rollout ablation {ablation!r} != agent's {agent.ablation!r}"
     assert ablation in ABLATIONS and policy in POLICIES
+    assert env.num_envs == batch, f"env.num_envs {env.num_envs} != batch {batch}"
     params = env.default_params          # static to env.step: pass it from the closure, not the carry
     key, k0 = jax.random.split(key)
     obs0, env_state = env.reset(k0, params)
@@ -80,3 +89,17 @@ def rollout(agent, env, key, n_actions, batch, ablation="full", policy="readout"
     keys = jax.random.split(key, n_actions)
     _, logs = jax.lax.scan(step, (obs0, env_state, init_state(agent.n, batch, agent.p)), keys)
     return logs
+
+
+def summarise(logs, n_actions):
+    """Survival, achievements held at death, action histogram, and mean reward from rollout logs."""
+    done = np.asarray(logs["done"])
+    first = np.where(done.any(0), done.argmax(0) + 1, n_actions)
+    ach = np.asarray(logs["achievements"])
+    # the log holds the pre-step state and the auto-reset zeroes achievements on the death step,
+    # so read the last row before the reset; identical to ach[f] for an env that never dies
+    unlocked = np.stack([ach[f - 1, b] for b, f in enumerate(first)])
+    actions = np.asarray(logs["action"])
+    hist = np.bincount(actions.ravel(), minlength=len(ACTIONS)) / actions.size
+    return dict(survival=first.tolist(), achievements=unlocked.sum(0).tolist(),
+                action_hist=hist.tolist(), reward=float(np.asarray(logs["reward"]).mean()))

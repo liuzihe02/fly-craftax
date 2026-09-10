@@ -14,22 +14,17 @@ from flycraftax.brain import (
 from flycraftax.data import load_connectome
 from flycraftax.drive import build_drive, drive_rates, kick_prob
 from flycraftax.env import ACTIONS, base_state, make_env
+from flycraftax.readout import readout_groups
 from flycraftax.retina import build_retina
 
-GROUPS = {"DNp09": dict(types=["DNp09"]), "MDN": dict(types=["MDN"]), "DNa02_L": dict(types=["DNa02"], side="L"),
-          "DNa02_R": dict(types=["DNa02"], side="R"), "MN9": dict(types=["MN9"])}
+# readable cell-type labels for the readout groups, which the plot legend and the table use
+LABELS = {"forward": "DNp09", "backward": "MDN", "turn_l": "DNa01/2_L", "turn_r": "DNa01/2_R",
+          "do": "MN9", "sleep": "FB6/7"}
 
 
 def _short(name):
     # turn_left and turn_right would both abbreviate to "tu"
     return "t" + name[len("turn_")] if name.startswith("turn_") else name[:2]
-
-
-def _groups(conn):
-    g = {k: conn.index(**v) for k, v in GROUPS.items()}
-    # sleep group: both dorsal fan-shaped-body layers
-    g["FB6/7"] = np.union1d(conn.index(type_prefix="FB6"), conn.index(type_prefix="FB7")).astype(np.int32)
-    return g
 
 
 def main(n_actions=40, n_steps=STEPS_PER_ACTION, batch=4, out=Path("outputs/io_rollout.png")):
@@ -39,7 +34,7 @@ def main(n_actions=40, n_steps=STEPS_PER_ACTION, batch=4, out=Path("outputs/io_r
     drive = build_drive(conn, build_retina(conn))
     rfc = rfc_steps(conn.n, drive.idx, p)
     silence = jnp.ones(conn.n)
-    groups = _groups(conn)
+    groups = {LABELS[k]: g for k, g in readout_groups(conn).items()}
     env = make_env(num_envs=batch, reset_ratio=4)
     key = jax.random.PRNGKey(0)
     obs, env_state = env.reset(key, env.default_params)
@@ -68,10 +63,10 @@ def main(n_actions=40, n_steps=STEPS_PER_ACTION, batch=4, out=Path("outputs/io_r
     out.parent.mkdir(exist_ok=True); fig.tight_layout(); fig.savefig(out, dpi=110)
     active = int((last_counts[0] > 0).sum())
     print(out, f"active neurons in last window (env 0): {active}")
-    print(f"{'group':8s} {'n':>4s} {'mean Hz':>9s} {'max Hz':>9s} {'silent':>8s}")
+    print(f"{'group':10s} {'n':>4s} {'mean Hz':>9s} {'max Hz':>9s} {'silent':>8s}")
     for k, g in groups.items():
         r = np.array([row[k] for row in log])
-        print(f"{k:8s} {len(g):4d} {r.mean():9.2f} {r.max():9.2f} {(r == 0).mean():8.2f}")
+        print(f"{k:10s} {len(g):4d} {r.mean():9.2f} {r.max():9.2f} {(r == 0).mean():8.2f}")
     print(f"distinct neurons that spiked at least once over {n_actions} actions (env 0): {int(ever.sum())}")
 
 

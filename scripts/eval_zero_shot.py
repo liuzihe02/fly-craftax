@@ -15,7 +15,7 @@ from flycraftax.brain import BrainParams
 from flycraftax.data import load_connectome
 from flycraftax.drive import build_drive
 from flycraftax.env import ACTIONS, make_env
-from flycraftax.loop import build_agent, rollout
+from flycraftax.loop import build_agent, rollout, summarise
 from flycraftax.readout import load_readout
 from flycraftax.retina import build_retina
 
@@ -23,19 +23,6 @@ CONDITIONS = [("full", "readout"), ("black", "readout"), ("static", "readout"), 
               ("shuffled", "readout"), ("full", "random")]
 SURVIVAL = (Achievement.COLLECT_WOOD, Achievement.EAT_COW, Achievement.COLLECT_SAPLING, Achievement.COLLECT_DRINK,
             Achievement.DEFEAT_ZOMBIE, Achievement.DEFEAT_SKELETON, Achievement.WAKE_UP)
-
-
-def summarise(logs, n_actions):
-    done = np.asarray(logs["done"])
-    first = np.where(done.any(0), done.argmax(0) + 1, n_actions)
-    ach = np.asarray(logs["achievements"])
-    # the log holds the pre-step state and the auto-reset zeroes achievements on the death step,
-    # so read the last row before the reset; identical to ach[f] for an env that never dies
-    unlocked = np.stack([ach[f - 1, b] for b, f in enumerate(first)])
-    actions = np.asarray(logs["action"])
-    hist = np.bincount(actions.ravel(), minlength=len(ACTIONS)) / actions.size
-    return dict(survival=first.tolist(), achievements=unlocked.sum(0).tolist(),
-                action_hist=hist.tolist(), reward=float(np.asarray(logs["reward"]).mean()))
 
 
 def main(n_actions=2000, batch=8, out=Path("outputs")):
@@ -52,8 +39,9 @@ def main(n_actions=2000, batch=8, out=Path("outputs")):
         results[name] = r = summarise(logs, n_actions)
         print(f"{name:22s} survival {np.mean(r['survival']):7.1f}  reward/action {r['reward']:+.4f}  "
               f"achievements {sum(r['achievements'])}  actions " + " ".join(f"{a[:2]}={h:.2f}" for a, h in zip(ACTIONS, r["action_hist"])), flush=True)
-    out.mkdir(exist_ok=True)
-    json.dump(dict(config=cfg, results=results), open(out / "zero_shot.json", "w"), indent=1)
+    out.mkdir(parents=True, exist_ok=True)
+    with open(out / "zero_shot.json", "w") as f:
+        json.dump(dict(config=cfg, results=results), f, indent=1)
 
     names = list(results)
     fig, ax = plt.subplots(1, 3, figsize=(17, 4.5))

@@ -93,6 +93,15 @@ def step(W, rfc, p, state, kick_prob, silence, key, bias=None):
         Kicked every step with rfc=2.2 ms, Brian2 spikes at 1, 24, 47, ... (ISI 23).
       * Reset runs after the synapse slot, so a kick landing on a spiking step is
         wiped by `v = v_reset`.
+
+    `bias` is ours, not Brian2's: a tonic mV-per-step input added in the state-update slot
+    (and, like every other write to `v`, dropped while refractory). Because it is added once
+    per step and the membrane decays by `b = exp(-dt/t_mbr)` per step, a constant bias settles
+    at `bias / (1 - b)` mV above rest -- about 200x the per-step value at dt = 0.1 ms, so
+    0.04 mV/step is roughly 8 mV of steady depolarisation against the 7 mV `v_rest` to `v_th`
+    gap. It is therefore dt-bound: the same `bias` at a different dt is a different current,
+    and a calibrated value must be rescaled with `1 - b` if dt changes. The Brian2 oracle
+    knows nothing about it, so that comparison only holds with `bias` unset.
     """
     a, b, c = p.decay()
     refrac = jnp.maximum(state.refrac - 1, 0)

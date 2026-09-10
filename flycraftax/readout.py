@@ -81,6 +81,7 @@ def save_readout(path, max_hz, w_syn, lamina_mv, mean, std, z_floor=1.0):
             },
             indent=1,
         )
+        + "\n"
     )
 
 
