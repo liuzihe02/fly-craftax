@@ -87,7 +87,7 @@ All are panels
   - [x] integration rollout through env, drive, brain, visual check
     - 40 random actions at batch 4: ~11k neurons spike but the output groups stay silent until the first thirst deficit at action 21, then MN9 and FB6/7 respond; DNp09 and MDN never fire. Interoception reaches the readout groups, the retina does not. M3 calibrates gain and synapse weight first
 - [ ] M3 zero-shot loop with ablation controls, plan: `docs/plans/2026-09-10-m3-zero-shot.md`
-  - [ ] tonic bias in the kernel, lamina resting drive
+  - [x] tonic bias in the kernel, lamina resting drive
   - [ ] DN readout: six signals, z-score floor
   - [ ] closed-loop rollout as one scan with ablations and policies
   - [ ] calibration sweep over lamina bias and synapse weight
