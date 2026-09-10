@@ -45,6 +45,7 @@ Inputs
   - Brightness sets R1-R6 rate; colour sets R8 rate (R8p blue, R8y green)
 - Hunger to NPF (`NPFL1-I`, 2 cells); thirst to hygrosensory class (66); fatigue to ER5 (21)
   - rate = deficit / 9 x max Hz, max Hz configurable
+- Lamina cells L1-L5 get a tonic bias current so light, via photoreceptor inhibition, reduces a resting rate (agent ruling 2026-09-10, pending owner approval: all photoreceptors are histaminergic and purely inhibitory, so without a lamina baseline vision cannot propagate in a zero-baseline model)
 
 Outputs (fixed mapping, zero-shot)
 - forward: DNp09; backward: MDN; turn: DNa02 + DNa01 left-minus-right; do: MN9; sleep: FB6/FB7 tangentials
@@ -86,10 +87,11 @@ All are panels
   - [x] integration rollout through env, drive, brain, visual check
     - 40 random actions at batch 4: ~11k neurons spike but the output groups stay silent until the first thirst deficit at action 21, then MN9 and FB6/7 respond; DNp09 and MDN never fire. Interoception reaches the readout groups, the retina does not. M3 calibrates gain and synapse weight first
 - [ ] M3 zero-shot loop with ablation controls, plan: `docs/plans/2026-09-10-m3-zero-shot.md`
+  - [ ] tonic bias in the kernel, lamina resting drive
   - [ ] DN readout: six signals, z-score floor
   - [ ] closed-loop rollout as one scan with ablations and policies
-  - [ ] calibration sweep over drive gain and synapse weight
-  - [ ] zero-shot evaluation against black, disconnected, shuffled, random
+  - [ ] calibration sweep over lamina bias and synapse weight
+  - [ ] zero-shot evaluation against black, static, disconnected, shuffled, random
 - [ ] M4 PPO linear readout
 - [ ] M5 viewer
 
@@ -101,6 +103,7 @@ All are panels
 - Locomotion DN mapping is from optogenetics and hobby projects, not validated in the Shiu model
 - Hunger is a 2-cell channel; thirst and fatigue use proxy cell types since water GRNs and dFB are unlabelled in MaleCNS
 - MaleCNS has no sugar-specific GRN labels, so the MN9 validation drives all 165 labellar GRNs (sugar, bitter, water together)
+- Fatigue via ER5 cannot propagate: ER5 is purely inhibitory into a zero-baseline network (follow-up decision)
 - Lunge pathway dropped: pC1/aIPg is the female aggression circuit
 - Two individuals exist in total (MaleCNS, FlyWire)
 - Achievement score is a readout property, not a brain property
