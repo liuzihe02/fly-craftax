@@ -61,7 +61,7 @@ All are panels
 
 - Craftax visualization
   - Want to see fly as sprite and any other realistic simulations
-- Real-time interactive visualization using the existing libraries to see the activations
+- Activation visualisation: delivered as a scrubbable offline page and GIF over pre-rendered frames (matplotlib over real soma positions); a live 3-D navis view is the recorded follow-up
 - Other indicators of the fly brain state or anything? TBD
 
 ### Milestones
@@ -101,8 +101,9 @@ All are panels
   - [x] loop step factory with a parameterised linear policy
   - [x] PPO training function, fully jitted
   - [x] train, greedy evaluation against the M3 baselines
-    - 150 updates, 76,800 env steps (8 envs x 64 steps), 58.6 min on the 4090, 550 episodes. Mean episode return 1.16 (first 10 updates) to 2.02 (last 10); episode length 132 to 130, i.e. the readout earns more reward per action without living longer. In-update entropy falls 1.89 to 0.99 of ln 7 = 1.95, so the policy is still far from deterministic. Loss stays finite throughout. The action mix moves from near-uniform (first 10: every action 0.12-0.16) to `do` 0.41 and `forward` 0.36 (last 10), through a `do`-heavy phase around update 60 and a `sleep`-heavy phase around update 90
+    - 150 updates, 76,800 env steps (8 envs x 64 steps), 58.6 min on the 4090, 550 episodes. Mean episode return 1.16 (first 10 updates) to 2.02 (last 10); episode length 132 to 130, i.e. the readout earns more reward per action without living longer. In-update entropy falls 1.89 to 0.99 of ln 7 = 1.95, so the policy is still far from deterministic. Loss stays finite throughout. The action mix moves from near-uniform (first 10: every action 0.12-0.16) to `do` 0.41 and `forward` 0.36 (last 10), through a `do`-heavy phase around update 60 and a `sleep`-heavy phase around update 90 The return plateaus by update ~40 (updates 40-150 mean 1.97); the remaining 110 updates lowered entropy without raising return.
     - greedy evaluation, 8 envs, 2,000-action cap, `PRNGKey(0)`, the same conditions as M3: mean survival ppo/greedy 117.6 (spread 45-244), full/readout 154.8, full/random 114.1; total achievements 21 (5 collect_wood, 7 collect_sapling, 3 collect_drink, 6 wake_up) versus 9 and 15; reward per action +0.0133 versus +0.0026 and +0.0104. The dominant action is `forward` 0.49 with `do` 0.46, against `noop` 0.68 for the zero-shot fly and a flat 0.14 for random. So PPO on the frozen brain's DN rates buys reward and achievements, not survival: it dies sooner than the zero-shot readout while collecting more. Caveats: one seed, one run; survival and achievements are first-episode only while the histogram spans all 2,000 actions; the training reward is the survival reward, and 76,800 steps is tiny for PPO
+    - Caveats: the greedy evaluation's 8 worlds are the 8 the training run started on (same key), so it is not held out, while the two baselines never trained on them; the trained readout had not been run against black/static/disconnected at this point, so nothing separated the frozen brain's DN rates from any noisy interoceptive feature vector, and the greedy policy is a near-perfect forward/do alternation that needs no vision. A control run follows (next sub-bullet)
 - [x] M5 viewer, plan: `docs/plans/2026-09-10-m5-viewer.md`
   - [x] fly sprites in the renderer, soma map, panel composition
   - [x] viewer script: frames, slider page, GIF
