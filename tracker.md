@@ -76,7 +76,7 @@ All are panels
     - 165 labellar GRNs at 100 Hz for 500 ms: MN9_L fires 2-10 Hz over seeds, MN9_R never (net-inhibitory in-edges), ~9.5k active neurons vs Shiu's 404. Rate does not rise with drive and drops above 100 Hz
     - threshold 2 fires MN9 less, so default 5 stays. Rate calibration is M3 work; full tables in `docs/plans/2026-09-09-m1-brain.md` results section
 - [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
-  - [ ] craftax installed and pinned, baseline wrappers copied, one env step
+  - [x] craftax installed and pinned, baseline wrappers copied, one env step
   - [ ] egocentric action wrapper
   - [ ] survival reward wrapper and batched env stack
   - [ ] photoreceptor retinotopy from lamina and medulla synapses
