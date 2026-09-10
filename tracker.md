@@ -22,7 +22,7 @@ High level project implementation specs
   - w = sign x synapse count x 0.275 mV; recalibrate the constant if the threshold changes
   - Input = Poisson forced spikes on a cell-type set; output = spike counts over a window; silencing = spike mask
   - State (v, g, delay buffer) persists across actions, resets per episode
-- JAX, sparse BCOO matvec, batched over envs, fits the 8 GB 4060; steps per action fixed after a throughput benchmark
+- JAX, sparse BCOO matvec, batched over envs, fits the 8 GB 4060; 200 brain steps (20 ms) per env action, fixed after the M1 benchmark
   - Can rent RunPod if not enough
 - Validation: Brian2 oracle (Shiu's MIT code) on a MaleCNS subgraph, spike-level agreement; sugar-GRN to MN9 curve on the full brain
 - FlyWire v783 replication is a later milestone
@@ -94,6 +94,7 @@ All are panels
 - Zero baseline activity: the brain is silent unless driven, so inhibition is invisible on silent neurons
 - Locomotion DN mapping is from optogenetics and hobby projects, not validated in the Shiu model
 - Hunger is a 2-cell channel; thirst and fatigue use proxy cell types since water GRNs and dFB are unlabelled in MaleCNS
+- MaleCNS has no sugar-specific GRN labels, so the MN9 validation drives all 165 labellar GRNs (sugar, bitter, water together)
 - Lunge pathway dropped: pC1/aIPg is the female aggression circuit
 - Two individuals exist in total (MaleCNS, FlyWire)
 - Achievement score is a readout property, not a brain property
