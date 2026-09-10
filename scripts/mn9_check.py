@@ -27,4 +27,5 @@ def main(threshold=5, hz_list=(25, 50, 100, 150, 200), t_ms=500, seeds=3):
 
 if __name__ == "__main__":
     import sys
-    main(threshold=int(sys.argv[1]) if len(sys.argv) > 1 else 5)
+    main(threshold=int(sys.argv[1]) if len(sys.argv) > 1 else 5,
+         seeds=int(sys.argv[2]) if len(sys.argv) > 2 else 3)
