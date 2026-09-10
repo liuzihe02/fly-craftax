@@ -79,7 +79,8 @@ All are panels
   - [x] craftax installed and pinned, baseline wrappers copied, one env step
   - [x] egocentric action wrapper
   - [x] survival reward wrapper and batched env stack
-  - [ ] photoreceptor retinotopy from lamina and medulla synapses
+  - [x] photoreceptor retinotopy from lamina and medulla synapses
+    - 2,182 photoreceptors mapped onto 491 left and 585 right columns; 1,983 outer photoreceptors are untraced fragments absent from the traced-only edge file, so left-eye luminance covers only the outer half of elevations. The full 1.1 GB edge file would recover them (follow-up decision)
   - [ ] radial retina sampler rotated by facing, visual check
   - [ ] drive assembly: retina plus hunger, thirst, fatigue
   - [ ] integration rollout through env, drive, brain, visual check
