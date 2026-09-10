@@ -11,6 +11,7 @@ dependencies = [
     "pyarrow==25.0.1",
     "craftax==1.6.1",
     "flax==0.12.9",
+    "optax==0.2.8",
     "chex==0.1.92",
     "pygame==2.6.1",
     "imageio==2.37.4",
