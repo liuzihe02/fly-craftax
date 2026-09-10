@@ -95,8 +95,13 @@ All are panels
   - [x] zero-shot evaluation against black, static, disconnected, shuffled, random
     - mean survival over 8 envs, 2,000-action cap: full 154.8, black 138.5, static 145.0, disconnected 168.0, shuffled 164.9, random 114.1. The per-env spread on `full` alone is 42 to 407, so no ablation separates from `full` on survival; the largest gap (random, -40.6) is under one standard error of the difference
     - total achievements over 8 envs: full 9, black 8, static 9, disconnected 0, shuffled 0, random 15 (mostly `wake_up`, plus `collect_wood`/`collect_sapling`). The dominant action of `full/readout` is `noop` at 0.68, then sleep 0.19, turn_left 0.12, do 0.01; DNp09 (`forward`) never fires. `black` and `static` match `full` action-for-action to within 0.01, so vision contributes nothing to behaviour; only `disconnected` (pure noop) and `shuffled` (turn_right 0.43, no achievements) change it
-- [ ] M4 PPO linear readout
-- [ ] M5 viewer
+- [ ] M4 PPO linear readout, plan: `docs/plans/2026-09-10-m4-ppo.md`
+  - [ ] loop step factory with a parameterised linear policy
+  - [ ] PPO training function, fully jitted
+  - [ ] train, greedy evaluation against the M3 baselines
+- [ ] M5 viewer, plan: `docs/plans/2026-09-10-m5-viewer.md`
+  - [ ] fly sprites in the renderer, soma map, panel composition
+  - [ ] viewer script: frames, slider page, GIF
 
 ## Known Limitations
 
