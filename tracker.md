@@ -64,7 +64,7 @@ All are panels
 
 ### Milestones
 
-- [ ] M1 loader + JAX kernel + Brian2 validation, plan: `docs/plans/2026-09-09-m1-brain.md`
+- [x] M1 loader + JAX kernel + Brian2 validation, plan: `docs/plans/2026-09-09-m1-brain.md`
   - [x] scaffold, pinned env, data download
   - [x] connectome loader with cache
   - [x] Brian2 oracle
@@ -72,7 +72,9 @@ All are panels
   - [x] oracle match on a 2000-neuron MaleCNS subgraph
   - [x] full-brain throughput benchmark on the 4090
     - 4090: 3,817 steps/s at batch 1 (0.38x realtime per env); batch 32 gives 152 steps/s and 4,851 env-steps/s, 0.98 GiB peak. Delay buffer as a ring beat the concatenate by 7% (batch 1) to 22% (batch 32) and is kept; BCSR, segment_sum, a transposed buffer and a driven-subset RNG were all equal or slower.
-  - [ ] MN9 smoke check with labellar GRN drive
+  - [x] MN9 smoke check with labellar GRN drive
+    - threshold 5 (N=146,271 E=5,140,897 LB=165), 165 labellar GRNs driven, 500 ms, 3 seeds, MN9_L / MN9_R / active neurons: 25 Hz 9.3 / 0.0 / 9550; 50 Hz 5.3 / 0.0 / 9575; 100 Hz 9.3 / 0.0 / 9561; 150 Hz 4.0 / 0.0 / 9537; 200 Hz 1.3 / 0.0 / 9632.
+    - threshold 2 (E=12,875,297): 25 Hz 4.0 / 0.0 / 11149; 50 Hz 1.3 / 0.0 / 11317; 100 Hz 0.7 / 0.0 / 5567; 150 Hz 0.0 / 0.0 / 11171; 200 Hz 0.7 / 0.0 / 11409. Default threshold 5 stays: it fires MN9 more, not less. First calibration finding: MN9_L fires (2-14 Hz over seeds) but does not rise with drive and falls off above 100 Hz, MN9_R never fires (26 in-edges to MN9_L's 93, net inhibitory), and ~9.5k neurons are active against Shiu's FlyWire 67 Hz / 404 active. Rate calibration is M3 work.
 - [ ] M2 Craftax wrappers + retina + state encoders, plan: `docs/plans/2026-09-10-m2-env.md`
   - [ ] craftax installed and pinned, baseline wrappers copied, one env step
   - [ ] egocentric action wrapper

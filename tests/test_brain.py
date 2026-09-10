@@ -117,3 +117,22 @@ def test_matches_oracle_on_malecns_subgraph():
     assert np.mean(got == ref) > 0.999
     assert np.array_equal(got.sum(0), ref.sum(0))  # a one-step shift moves no spike between neurons
     assert ref[:, len(seeds):].sum() > 100  # propagation to undriven neurons, not just seed echo
+
+
+@pytest.mark.slow
+def test_mn9_responds_to_labellar_drive():
+    """Labellar GRNs at 100 Hz for 500 ms make MN9 fire; silent input makes it silent."""
+    from flycraftax.data import load_connectome
+    conn = load_connectome()
+    p = BrainParams()
+    W = build_weights(conn.n, conn.pre, conn.post, conn.signed_count(), p)
+    lb, mn9 = conn.index(type_prefix="LB"), conn.index(types=["MN9"])
+    rfc = rfc_steps(conn.n, lb, p)
+    n_steps = 5000
+    on = jnp.zeros((1, conn.n)).at[:, lb].set(rate_for_hz(100.0, p))
+    off = jnp.zeros((1, conn.n))
+    key = jax.random.PRNGKey(0)
+    r_on = rate_hz(run_window(W, rfc, p, init_state(conn.n, 1, p), on, jnp.ones(conn.n), key, n_steps).counts, n_steps, p)
+    r_off = rate_hz(run_window(W, rfc, p, init_state(conn.n, 1, p), off, jnp.ones(conn.n), key, n_steps).counts, n_steps, p)
+    assert float(r_off.sum()) == 0.0
+    assert float(r_on[0, mn9].max()) > 5.0
