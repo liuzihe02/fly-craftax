@@ -64,3 +64,21 @@ def test_linear_policy_rollout(conn):
     assert logs["feats"].shape == (3, 2, 1314) and logs["logp"].shape == (3, 2) and logs["value"].shape == (3, 2)
     assert np.allclose(np.asarray(logs["logp"]), np.log(1 / 7), atol=1e-5)   # zero params: uniform policy
     assert logs["ep_return"].shape == (3, 2) and logs["ep_done"].dtype == bool
+
+
+@pytest.mark.slow
+def test_alternate_policy_is_forward_do(conn):
+    from flycraftax.brain import BrainParams
+    from flycraftax.drive import build_drive
+    from flycraftax.env import DO, FORWARD, make_env
+    from flycraftax.loop import build_agent, rollout
+    from flycraftax.readout import Readout, readout_groups, std_floor
+    from flycraftax.retina import build_retina
+    drive = build_drive(conn, build_retina(conn), 100.0, lamina_mv=0.04)
+    groups = readout_groups(conn)
+    agent = build_agent(conn, drive, Readout(groups, np.zeros(6, np.float32), std_floor(groups)), BrainParams())
+    env = make_env(2)
+    logs = rollout(agent, env, jax.random.PRNGKey(0), 4, 2, policy="alternate")
+    want = np.array([[FORWARD] * 2, [DO] * 2, [FORWARD] * 2, [DO] * 2])   # the open-loop control, per env
+    assert np.array_equal(np.asarray(logs["action"]), want) and want[:, 0].tolist() == [1, 5, 1, 5]
+    assert "feats" not in logs                          # keep_feats defaults off away from the linear policy

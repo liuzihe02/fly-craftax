@@ -35,4 +35,7 @@ train:
 viewer:
 	$(RUN) scripts/make_viewer.py
 
-.PHONY: env setup data test test-slow bench mn9 calibrate eval train viewer
+controls:
+	$(RUN) scripts/eval_ppo_controls.py
+
+.PHONY: env setup data test test-slow bench mn9 calibrate eval train viewer controls

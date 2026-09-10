@@ -9,12 +9,12 @@ from flycraftax.brain import (
     STEPS_PER_ACTION, BrainParams, build_weights, init_state, rate_hz, reset_counts, reset_envs, rfc_steps, run_window,
 )
 from flycraftax.drive import Drive, drive_rates, kick_prob
-from flycraftax.env import ACTIONS, base_state
+from flycraftax.env import ACTIONS, DO, FORWARD, base_state
 from flycraftax.readout import SPIKE_HZ, Readout, act, signals
 
 ABLATIONS = ("full", "black", "static", "disconnected", "shuffled")
 WIRINGS = ("full", "shuffled")     # the only build-time ablation: the rest are applied at rollout time
-POLICIES = ("readout", "random", "linear")
+POLICIES = ("readout", "random", "linear", "alternate")
 
 
 @dataclass
@@ -75,6 +75,9 @@ def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, 
 
     `keep_feats` logs `feats` (B, 1314), `logp` and `value`; it defaults to the linear policy, the
     only consumer, because a 2,000-action rollout of them is ~100 MB of device memory nothing reads.
+
+    `alternate` is the open-loop control for the trained readout: FORWARD, DO, FORWARD, DO ...,
+    the mix the greedy linear policy converged on, driven by the brain's step counter and nothing else.
     """
     assert ablation in ABLATIONS and policy in POLICIES
     if keep_feats is None:
@@ -91,6 +94,7 @@ def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, 
     def step(carry, k):
         obs, env_state, brain, params = carry
         k_brain, k_act, k_env = jax.random.split(k, 3)
+        window = brain.t // agent.n_steps      # the action index: read before this action's window runs
         st = base_state(env_state)
         if ablation == "black":
             obs_in = jnp.zeros_like(obs)     # photoreceptors silent, lamina at its resting rate
@@ -103,6 +107,8 @@ def make_step(agent, env, ablation="full", policy="readout", keep_frames=False, 
         logp = value = jnp.zeros(env.num_envs)
         if policy == "random":
             action = jax.random.randint(k_act, (env.num_envs,), 0, len(ACTIONS))
+        elif policy == "alternate":
+            action = jnp.full((env.num_envs,), jnp.where(window % 2 == 0, FORWARD, DO), jnp.int32)
         elif policy == "linear":
             logits, value = linear(params, feats)
             action = jnp.argmax(logits, axis=1) if greedy else jax.random.categorical(k_act, logits)

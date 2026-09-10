@@ -13,3 +13,4 @@ On a pod without conda, pass the interpreter: `make test RUN=python3`.
 - `make eval` -- zero-shot rollout against the ablation controls, into `outputs/`.
 - `make train` -- PPO on the linear DN readout, then a greedy evaluation against the M3 baselines (needs `make eval` first).
 - `make viewer` -- render the scrubbable brain viewer: `outputs/viewer/index.html` and `outputs/viewer.gif`.
+- `make controls` -- replay the trained readout on a held-out key against the ablations and an open-loop FORWARD/DO baseline (needs `make train` first).

@@ -25,24 +25,15 @@ SURVIVAL = (Achievement.COLLECT_WOOD, Achievement.EAT_COW, Achievement.COLLECT_S
             Achievement.DEFEAT_ZOMBIE, Achievement.DEFEAT_SKELETON, Achievement.WAKE_UP)
 
 
-def main(n_actions=2000, batch=8, out=Path("outputs")):
-    conn = load_connectome()
-    readout, cfg = load_readout(conn)
-    drive = build_drive(conn, build_retina(conn), cfg["max_hz"], lamina_mv=cfg["lamina_mv"])
-    p = BrainParams(w_syn=cfg["w_syn"])
-    env = make_env(batch)
-    results = {}
-    for ablation, policy in CONDITIONS:
-        name = f"{ablation}/{policy}"
-        agent = build_agent(conn, drive, readout, p, wiring="shuffled" if ablation == "shuffled" else "full")
-        logs = rollout(agent, env, jax.random.PRNGKey(0), n_actions, batch, ablation=ablation, policy=policy)
-        results[name] = r = summarise(logs, n_actions)
-        print(f"{name:22s} survival {np.mean(r['survival']):7.1f}  reward/action {r['reward']:+.4f}  "
-              f"achievements {sum(r['achievements'])}  actions " + " ".join(f"{a[:2]}={h:.2f}" for a, h in zip(ACTIONS, r["action_hist"])), flush=True)
-    out.mkdir(parents=True, exist_ok=True)
-    with open(out / "zero_shot.json", "w") as f:
-        json.dump(dict(config=cfg, results=results), f, indent=1)
+def line(name, r, width=22):
+    """One condition's summary, the format both eval scripts print."""
+    return (f"{name:{width}s} survival {np.mean(r['survival']):7.1f}  reward/action {r['reward']:+.4f}  "
+            f"achievements {sum(r['achievements'])}  actions "
+            + " ".join(f"{a[:2]}={h:.2f}" for a, h in zip(ACTIONS, r["action_hist"])))
 
+
+def plot_conditions(results, batch, path):
+    """Three panels: survival bars with per-env dots, stacked survival achievements, action frequency."""
     names = list(results)
     fig, ax = plt.subplots(1, 3, figsize=(17, 4.5))
     for i, n in enumerate(names):
@@ -57,7 +48,27 @@ def main(n_actions=2000, batch=8, out=Path("outputs")):
     for n in names:
         ax[2].plot(results[n]["action_hist"], marker="o", label=n)
     ax[2].set_xticks(range(len(ACTIONS))); ax[2].set_xticklabels(ACTIONS, rotation=30, ha="right"); ax[2].set_ylabel("action frequency"); ax[2].legend(fontsize=7)
-    fig.tight_layout(); fig.savefig(out / "zero_shot.png", dpi=110)
+    fig.tight_layout(); fig.savefig(path, dpi=110); plt.close(fig)
+
+
+def main(n_actions=2000, batch=8, out=Path("outputs")):
+    conn = load_connectome()
+    readout, cfg = load_readout(conn)
+    drive = build_drive(conn, build_retina(conn), cfg["max_hz"], lamina_mv=cfg["lamina_mv"])
+    p = BrainParams(w_syn=cfg["w_syn"])
+    env = make_env(batch)
+    results = {}
+    for ablation, policy in CONDITIONS:
+        name = f"{ablation}/{policy}"
+        agent = build_agent(conn, drive, readout, p, wiring="shuffled" if ablation == "shuffled" else "full")
+        logs = rollout(agent, env, jax.random.PRNGKey(0), n_actions, batch, ablation=ablation, policy=policy)
+        results[name] = r = summarise(logs, n_actions)
+        print(line(name, r), flush=True)
+    out.mkdir(parents=True, exist_ok=True)
+    with open(out / "zero_shot.json", "w") as f:
+        json.dump(dict(config=cfg, results=results), f, indent=1)
+
+    plot_conditions(results, batch, out / "zero_shot.png")
 
     agent = build_agent(conn, drive, readout, p)
     logs = rollout(agent, env, jax.random.PRNGKey(1), 300, batch, keep_frames=True)
