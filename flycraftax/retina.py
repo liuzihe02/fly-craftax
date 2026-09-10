@@ -3,8 +3,11 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+import jax
+import jax.numpy as jnp
 import numpy as np
 import pandas as pd
+from jax.scipy.ndimage import map_coordinates
 
 from flycraftax.data import Connectome
 
@@ -70,3 +73,37 @@ def build_retina(conn: Connectome, data_dir: Path = Path("data")) -> Retina:
     r = Retina(idx=idx, side=side, u=u, v=v, channel=best.channel.values.astype(np.int8))
     np.savez(cache, **r.__dict__)
     return r
+
+
+CENTER = (24.5, 31.5)
+MAP_ROWS = 49
+# Unit (row, col) vectors for facing values 1..4: LEFT, RIGHT, UP, DOWN. Index 0 unused.
+FACING_VEC = jnp.array([[0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]], jnp.float32)
+LUMA = jnp.array([0.2126, 0.7152, 0.0722], jnp.float32)
+
+
+def sample_points(retina: Retina, facing, r_min: float = 4.0, r_max: float = 23.0):
+    """Pixel (row, col) coords, (B, K, 2), for each cell given facing (B,) Action values."""
+    theta = jnp.where(retina.side == 0, 1.0, -1.0) * retina.u * jnp.pi  # 0 ahead, +pi/2 left, -pi/2 right
+    radius = r_min + retina.v * (r_max - r_min)
+    fwd = FACING_VEC[facing]  # (B, 2)
+    left = jnp.stack([-fwd[:, 1], fwd[:, 0]], axis=1)  # 90 degrees counter-clockwise on screen
+    offset = radius[None, :, None] * (
+        jnp.cos(theta)[None, :, None] * fwd[:, None, :] + jnp.sin(theta)[None, :, None] * left[:, None, :]
+    )
+    return jnp.asarray(CENTER) + offset  # (B, K, 2)
+
+
+def sample(retina: Retina, obs, facing, r_min: float = 4.0, r_max: float = 23.0):
+    """Per-cell values in [0, 1], (B, K), bilinear from the frame; grey 0.5 outside the map view."""
+    pts = sample_points(retina, facing, r_min, r_max)
+    view = obs[:, :MAP_ROWS]  # crop the inventory bar
+    planes = jnp.stack([view @ LUMA, view[..., 2], view[..., 1]], axis=1)  # (B, 3, 49, 63): luminance, blue, green
+
+    def one(planes_b, pts_b):
+        vals = jax.vmap(
+            lambda pl: map_coordinates(pl, [pts_b[:, 0], pts_b[:, 1]], order=1, mode="constant", cval=0.5)
+        )(planes_b)
+        return vals[retina.channel, jnp.arange(len(retina.channel))]
+
+    return jax.vmap(one)(planes, pts)
