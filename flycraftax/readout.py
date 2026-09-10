@@ -88,4 +88,8 @@ def load_readout(conn, path=NORM_PATH):
     cfg = json.loads(Path(path).read_text())
     groups = readout_groups(conn)
     std = np.maximum(np.array(cfg["std"], np.float32), std_floor(groups))
-    return Readout(groups, np.array(cfg["mean"], np.float32), std, cfg["z_floor"]), cfg
+    mean = np.array(cfg["mean"], np.float32)
+    # turn signals are antisymmetric; their baseline is zero by construction, and subtracting a
+    # measured mean on the spike lattice inverts the bias
+    mean[2] = mean[3] = 0.0
+    return Readout(groups, mean, std, cfg["z_floor"]), cfg

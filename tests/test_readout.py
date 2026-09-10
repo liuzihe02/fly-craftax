@@ -56,7 +56,7 @@ def test_save_load_roundtrip(tmp_path):
             return np.array([0], np.int32)
     ro, cfg = load_readout(Conn(), p)
     assert cfg["w_syn"] == 0.44 and cfg["lamina_mv"] == 0.06 and cfg["max_hz"] == 100.0
-    assert np.allclose(ro.mean, np.arange(6.0))
+    assert np.allclose(ro.mean, [0, 1, 0, 0, 4, 5])
     assert np.all(ro.std >= 50.0 / 2)
 
 
