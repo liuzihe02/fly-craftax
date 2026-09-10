@@ -74,6 +74,15 @@ def test_inventory_bar_is_never_sampled():
     obs = _frame(slice(49, 63), slice(0, 63))  # bright inventory bar only
     for facing in (1, 2, 3, 4):
         assert float(np.asarray(sample(r, obs, jnp.array([facing]))).max()) < 0.1
+        # r_max=30 pushes the cells past row 48, so the crop is load-bearing: those points
+        # sit outside the cropped plane and map_coordinates fills them with cval=0.5 --
+        # "outside the view" is neutral grey, not dark, so a dark reading here would be
+        # indistinguishable from genuinely dark terrain. Without the crop they would read
+        # the bright bar as 1.0.
+        far = np.asarray(sample(r, obs, jnp.array([facing]), r_max=30.0))[0]
+        assert far.max() <= 0.5 + 1e-6
+        if facing == 4:  # DOWN: the front cells point straight at the inventory bar
+            assert np.isclose(far, 0.5, atol=1e-6).any()
 
 
 def test_channels_pick_colour():

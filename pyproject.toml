@@ -30,5 +30,5 @@ include = ["flycraftax*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["slow: needs the full MaleCNS data and a GPU"]
+markers = ["slow: needs the full MaleCNS data, a GPU, or a real Craftax env step"]
 addopts = "-m 'not slow'"

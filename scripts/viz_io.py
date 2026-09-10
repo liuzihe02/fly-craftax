@@ -20,6 +20,11 @@ GROUPS = {"DNp09": dict(types=["DNp09"]), "MDN": dict(types=["MDN"]), "DNa02_L":
           "DNa02_R": dict(types=["DNa02"], side="R"), "MN9": dict(types=["MN9"])}
 
 
+def _short(name):
+    # turn_left and turn_right would both abbreviate to "tu"
+    return "t" + name[len("turn_")] if name.startswith("turn_") else name[:2]
+
+
 def _groups(conn):
     g = {k: conn.index(**v) for k, v in GROUPS.items()}
     # sleep group: both dorsal fan-shaped-body layers
@@ -45,6 +50,7 @@ def main(n_actions=40, n_steps=STEPS_PER_ACTION, batch=4, out=Path("outputs/io_r
         key, k_act, k_brain, k_env = jax.random.split(key, 4)
         kp = kick_prob(drive, drive_rates(drive, obs, base_state(env_state)), conn.n, p)
         brain = run_window(W, rfc, p, reset_counts(brain), kp, silence, k_brain, n_steps)
+        last_counts = brain.counts  # keep them: reset_envs below may zero the whole state
         rates = rate_hz(brain.counts, n_steps, p)
         log.append({k: float(rates[0, g].mean()) for k, g in groups.items()})
         ever |= np.asarray(brain.counts[0]) > 0
@@ -58,9 +64,9 @@ def main(n_actions=40, n_steps=STEPS_PER_ACTION, batch=4, out=Path("outputs/io_r
     for k in groups:
         ax[1].plot([r[k] for r in log], label=k)
     ax[1].set_xlabel("action index"); ax[1].set_ylabel("mean rate (Hz)"); ax[1].legend(ncol=3)
-    ax[1].set_title("actions: " + " ".join(ACTIONS[a][:2] for a in actions))
+    ax[1].set_title("actions: " + " ".join(_short(ACTIONS[a]) for a in actions))
     out.parent.mkdir(exist_ok=True); fig.tight_layout(); fig.savefig(out, dpi=110)
-    active = int((brain.counts[0] > 0).sum())
+    active = int((last_counts[0] > 0).sum())
     print(out, f"active neurons in last window (env 0): {active}")
     print(f"{'group':8s} {'n':>4s} {'mean Hz':>9s} {'max Hz':>9s} {'silent':>8s}")
     for k, g in groups.items():

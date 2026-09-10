@@ -89,6 +89,9 @@ SURVIVAL = (
 @struct.dataclass
 class RewardState:
     env_state: Any
+    # In a real rollout this always equals env_state.achievements: reset seeds it and step
+    # rewrites it from the fresh state. It is a separate field so the reward test can
+    # fabricate a state whose previous achievements differ from the current ones.
     prev_achievements: jnp.ndarray
 
 
@@ -111,8 +114,16 @@ class SurvivalRewardWrapper(GymnaxWrapper):
         return obs, RewardState(s, s.achievements), reward, done, info
 
 
-def make_env(num_envs, reset_ratio=16):
+def make_base_env():
+    return make_craftax_env_from_name("Craftax-Classic-Pixels-v1", auto_reset=False)
+
+
+# The outer auto-reset overwrites LogEnvState.returned_episode_* with a lax.select over the
+# freshly reset state, so a finished episode's totals never survive in the state. Read
+# episode returns and lengths from `info` only.
+def make_env(num_envs, reset_ratio=None):
     """The full stack: reward inside the auto-reset, logging outside it."""
-    env = make_craftax_env_from_name("Craftax-Classic-Pixels-v1", auto_reset=False)
-    env = LogWrapper(SurvivalRewardWrapper(EgocentricWrapper(env)))
+    if reset_ratio is None:
+        reset_ratio = min(16, num_envs)  # it must divide num_envs, so cap it at the batch
+    env = LogWrapper(SurvivalRewardWrapper(EgocentricWrapper(make_base_env())))
     return OptimisticResetVecEnvWrapper(env, num_envs=num_envs, reset_ratio=reset_ratio)

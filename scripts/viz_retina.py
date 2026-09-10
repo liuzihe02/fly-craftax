@@ -10,14 +10,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from flycraftax.data import load_connectome
-from flycraftax.env import EgocentricWrapper, FORWARD, TURN_LEFT
+from flycraftax.env import EgocentricWrapper, FORWARD, TURN_LEFT, make_base_env
 from flycraftax.retina import build_retina, sample, sample_points
 
 
 def main(out=Path("outputs/retina.png")):
-    from craftax.craftax_env import make_craftax_env_from_name
-
-    env = EgocentricWrapper(make_craftax_env_from_name("Craftax-Classic-Pixels-v1", auto_reset=False))
+    env = EgocentricWrapper(make_base_env())
     key = jax.random.PRNGKey(0)
     obs, state = env.reset(key, env.default_params)
     for a in (FORWARD, FORWARD, TURN_LEFT, FORWARD):

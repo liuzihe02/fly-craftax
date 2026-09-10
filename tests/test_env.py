@@ -5,9 +5,9 @@ import pytest
 
 @pytest.mark.slow
 def test_base_env_one_step():
-    from craftax.craftax_env import make_craftax_env_from_name
+    from flycraftax.env import make_base_env
 
-    env = make_craftax_env_from_name("Craftax-Classic-Pixels-v1", auto_reset=False)
+    env = make_base_env()
     key = jax.random.PRNGKey(0)
     obs, state = env.reset(key, env.default_params)
     assert obs.shape == (63, 63, 3) and obs.dtype == jnp.float32
@@ -17,17 +17,11 @@ def test_base_env_one_step():
     assert int(state.timestep) == 1
 
 
-def _base_env():
-    from craftax.craftax_env import make_craftax_env_from_name
-
-    return make_craftax_env_from_name("Craftax-Classic-Pixels-v1", auto_reset=False)
-
-
 @pytest.fixture(scope="module")
 def ego():
-    from flycraftax.env import EgocentricWrapper
+    from flycraftax.env import EgocentricWrapper, make_base_env
 
-    env = EgocentricWrapper(_base_env())
+    env = EgocentricWrapper(make_base_env())
     key = jax.random.PRNGKey(0)
     obs, state = env.reset(key, env.default_params)
     return env, key, state
@@ -96,9 +90,9 @@ def test_rotation_tables():
 
 @pytest.mark.slow
 def test_reward_counts_survival_achievements_once():
-    from flycraftax.env import EgocentricWrapper, NOOP, SurvivalRewardWrapper
+    from flycraftax.env import EgocentricWrapper, NOOP, SurvivalRewardWrapper, make_base_env
 
-    env = SurvivalRewardWrapper(EgocentricWrapper(_base_env()))
+    env = SurvivalRewardWrapper(EgocentricWrapper(make_base_env()))
     key = jax.random.PRNGKey(0)
     obs, state = env.reset(key, env.default_params)
     ach = state.env_state.achievements.at[0].set(True).at[1].set(True)
@@ -112,9 +106,9 @@ def test_reward_counts_survival_achievements_once():
 
 @pytest.mark.slow
 def test_reward_health_term():
-    from flycraftax.env import EgocentricWrapper, NOOP, SurvivalRewardWrapper
+    from flycraftax.env import EgocentricWrapper, NOOP, SurvivalRewardWrapper, make_base_env
 
-    env = SurvivalRewardWrapper(EgocentricWrapper(_base_env()))
+    env = SurvivalRewardWrapper(EgocentricWrapper(make_base_env()))
     key = jax.random.PRNGKey(0)
     obs, state = env.reset(key, env.default_params)
     hurt = state.replace(

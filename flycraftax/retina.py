@@ -11,6 +11,8 @@ from jax.scipy.ndimage import map_coordinates
 
 from flycraftax.data import Connectome
 
+_CACHE_VERSION = 1  # bump when build_retina's output changes
+
 CHANNEL = {"R1-R6": 0, "R8p": 1, "R8y": 2}
 LAMINA = ("L1", "L2", "L3")
 
@@ -38,10 +40,12 @@ def _hex_xy(data_dir: Path, body_id: np.ndarray) -> np.ndarray:
 
 def build_retina(conn: Connectome, data_dir: Path = Path("data")) -> Retina:
     """Each photoreceptor takes the hex column of its modal postsynaptic partner."""
-    cache = data_dir / "retina.npz"
+    cache = data_dir / f"retina_v{_CACHE_VERSION}.npz"
     if cache.exists():
         z = np.load(cache)
-        return Retina(**{k: z[k] for k in z.files})
+        # idx points into the Connectome, so a differently sized one invalidates the cache.
+        if int(z["n"]) == conn.n:
+            return Retina(**{k: z[k] for k in z.files if k != "n"})
 
     xy = _hex_xy(data_dir, conn.body_id)
     has_col = ~np.isnan(xy[:, 0])
@@ -71,7 +75,7 @@ def build_retina(conn: Connectome, data_dir: Path = Path("data")) -> Retina:
             out[m] = (c - c.min()) / (c.max() - c.min())
     # Assumption: within an eye, increasing x runs front to back and increasing y near to far.
     r = Retina(idx=idx, side=side, u=u, v=v, channel=best.channel.values.astype(np.int8))
-    np.savez(cache, **r.__dict__)
+    np.savez(cache, n=conn.n, **r.__dict__)
     return r
 
 
